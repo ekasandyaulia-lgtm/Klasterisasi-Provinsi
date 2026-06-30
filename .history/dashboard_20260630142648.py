@@ -1,0 +1,90 @@
+import streamlit as st
+import pandas as pd
+
+st.set_page_config(
+    page_title="Dashboard Analisis Klaster Provinsi", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+@st.cache_data
+def load_data():
+    df = pd.read_csv("data\hasil_clustering_final.csv")
+    return df
+df = load_data()
+
+col_header, col_filter, col_btn = st.columns([6, 2, 3], vertical_alignment="bottom")
+
+with col_header:
+    st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
+
+with col_filter:
+    tahun_terakhir = 2025
+    tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
+
+with col_btn:
+    st.button("Unduh PDF", use_container_width=True)
+
+st.divider()
+
+# KPI Cards
+#◦	Jumlah provinsi per klaster pada tahun terpilih (mis. "21 dari 34 provinsi berada di klaster Digital Menengah")
+# ◦	Persentase provinsi yang naik klaster dibanding tahun sebelumnya
+# ◦	Persentase provinsi yang turun klaster dibanding tahun sebelumnya
+# ◦	Provinsi dengan pertumbuhan transaksi digital (Server_Based) tertinggi tahun ini
+st.subheader("KPI Tahun {}".format(tahun))
+df_tahun_ini = df[df['Tahun'] == tahun]
+df_tahun_lalu = df[df['Tahun'] == tahun - 1]
+total_provinsi = df_tahun_ini.shape[0]
+
+klaster_dominan = "-"
+kpi1_teks = "0 provinsi"
+persentase_naik = 0.0
+persentase_turun = 0.0
+provinsi_tertinggi = "-"
+pertumbuhan_tertinggi = 0.0
+
+if total_provinsi > 0:
+    klaster_counts = df_tahun_ini['Klaster'].value_counts()
+    klaster_dominan = klaster_counts.idxmax()
+    jumlah_klaster_dominan = klaster_counts.max()
+    kpi1_teks = "{} dari {} provinsi berada di klaster {}".format(jumlah_klaster_dominan, total_provinsi, klaster_dominan)
+
+if not df_tahun_lalu.empty and not df_tahun_ini.empty:
+    df_merged = pd.merge(df_tahun_ini[['Provinsi', 'Klaster']], df_tahun_lalu[['Provinsi', 'Klaster']], on='Provinsi', suffixes=('_now', '_prev'))
+    total_merged = df_merged.shape[0]
+
+    if total_merged > 0:
+        naik = (df_merged['Klaster_now'] > df_merged['Klaster_prev']).sum()
+        turun = (df_merged['Klaster_now'] < df_merged['Klaster_prev']).sum()
+        persentase_naik = (naik / total_provinsi) * 100
+        persentase_turun = (turun / total_provinsi) * 100
+
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+
+kpi1.metric(label=f"Klaster Dominan ({klaster_dominan})", value=kpi1_teks)
+kpi2.metric(label="Naik Klaster", value=f"{persentase_naik:.1f}%", delta="vs Tahun Lalu", delta_color="normal")
+kpi3.metric(label="Turun Klaster", value=f"{persentase_turun:.1f}%", delta="- vs Tahun Lalu", delta_color="inverse")
+kpi4.metric(label=f"Top Growth ({provinsi_tertinggi})", value=f"{pertumbuhan_tertinggi:.1f}%", delta="Server Based")
+
+st.divider()
+
+tab11, tab12, tab13, tab14 = st.tabs([
+    "Peta Klaster Provinsi", 
+    "Dinamika Temporal", 
+    "Profil & Perbandingan Provinsi", 
+    "Metodologi & Validitas Model"
+    ])
+
+# Tab Peta Klaster Provinsi
+with tab11:
+    st.write("Area Peta Klaster Provin")
+# Tab Dinamika Temporal
+with tab12:
+    st.write("Area Dinamika Temporal")
+# Tab Profil & Perbandingan Provinsi
+with tab13:
+    st.write("Area Profil & Perbandingan Provinsi")
+# Tab Metodologi & Validitas Model
+with tab14:
+    st.write("Area Metodologi & Validitas Model")
