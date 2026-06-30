@@ -102,7 +102,7 @@ elif halaman == "Peta Klaster Provinsi":
     df_map = df[(df['Tahun'] == tahun_peta) & (df['Cluster_raw'].isin(selected_klaster))]
     
     try:
-        with open("indonesia.geojson", "r") as f:
+        with open("indonesia_provinces.geojson", "r") as f:
             geojson = json.load(f)
         fig = px.choropleth(
             df_map, geojson=geojson, locations='Provinsi', featureidkey="properties.name",
