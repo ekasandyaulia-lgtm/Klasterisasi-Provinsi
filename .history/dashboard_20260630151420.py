@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from streamlit_option_menu import option_menu
 
 st.set_page_config(page_title="Dashboard Analisis Klaster Provinsi", layout="wide")
 
@@ -11,22 +10,16 @@ def load_data():
 
 df = load_data()
 
-# 1. SIDEBAR NAVIGASI DENGAN OPTION MENU
+# 1. SIDEBAR NAVIGASI (Tanpa Emoji)
 with st.sidebar:
     st.title("Navigasi Dashboard")
-    halaman = option_menu(
-        menu_title=None, # Sembunyikan judul menu di dalam
-        options=[
-            "Overview", 
-            "Peta Klaster Provinsi", 
-            "Dinamika Temporal",
-            "Profil & Perbandingan Provinsi", 
-            "Metodologi & Validitas Model"
-        ],
-        icons=["house", "map", "graph-up", "person-badge", "info-circle"], # Ikon opsional
-        menu_icon="cast",
-        default_index=0,
-    )
+    halaman = st.radio("Pilih Halaman", [
+        "Overview", 
+        "Peta Klaster Provinsi", 
+        "Dinamika Temporal",
+        "Profil & Perbandingan Provinsi", 
+        "Metodologi & Validitas Model"
+    ])
     st.divider()
 
 # 2. KONTEN HALAMAN
@@ -55,13 +48,13 @@ if halaman == "Overview":
 
     if not df_tahun_lalu.empty and not df_tahun_ini.empty:
         df_merged = pd.merge(
-            df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']], 
-            df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']], 
+            df_tahun_ini[['Provinsi', 'Cluster_raw', 'Server_Based']], 
+            df_tahun_lalu[['Provinsi', 'Cluster_raw', 'Server_Based']], 
             on='Provinsi', suffixes=('_now', '_prev')
         )
         if not df_merged.empty:
-            persentase_naik = ((df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
-            persentase_turun = ((df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
+            persentase_naik = ((df_merged['Cluster_raw_now'] > df_merged['Cluster_raw_prev']).sum() / total_provinsi) * 100
+            persentase_turun = ((df_merged['Cluster_raw_now'] < df_merged['Cluster_raw_prev']).sum() / total_provinsi) * 100
             df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
             idx = df_merged['growth'].idxmax()
             provinsi_tertinggi, pertumbuhan_tertinggi = df_merged.loc[idx, 'Provinsi'], df_merged.loc[idx, 'growth']
@@ -82,8 +75,8 @@ if halaman == "Overview":
         st.info("Visualisasi peta akan muncul di sini.")
     with col_grafik:
         st.markdown("### Tren Provinsi per Klaster")
-        fig = px.bar(df.groupby(['Tahun', 'Target_Semantic']).size().reset_index(name='Jumlah'), 
-                     x='Tahun', y='Jumlah', color='Target_Semantic', barmode='stack', color_discrete_sequence=px.colors.qualitative.Set2)
+        fig = px.bar(df.groupby(['Tahun', 'Cluster_raw']).size().reset_index(name='Jumlah'), 
+                     x='Tahun', y='Jumlah', color='Cluster_raw', barmode='stack', color_discrete_sequence=px.colors.qualitative.Set2)
         st.plotly_chart(fig, use_container_width=True)
 
 # 3. HALAMAN LAINNYA
