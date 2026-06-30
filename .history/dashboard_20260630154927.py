@@ -1,0 +1,123 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from streamlit_option_menu import option_menu
+import json
+
+# Konfigurasi Halaman
+st.set_page_config(page_title="Dashboard Analisis Klaster Provinsi", layout="wide")
+
+# Cache Data
+@st.cache_data
+def load_data():
+    return pd.read_csv("hasil_clustering_final.csv")
+
+df = load_data()
+
+# 1. SIDEBAR NAVIGASI
+with st.sidebar:
+    st.title("Navigasi Dashboard")
+    halaman = option_menu(
+        menu_title=None,
+        options=[
+            "Overview", 
+            "Peta Klaster Provinsi", 
+            "Dinamika Temporal",
+            "Profil & Perbandingan Provinsi", 
+            "Metodologi & Validitas Model"
+        ],
+        icons=["house", "map", "graph-up", "person-badge", "info-circle"],
+        default_index=0,
+    )
+    st.divider()
+
+# 2. HALAMAN OVERVIEW
+if halaman == "Overview":
+    # Header & Filter
+    col_header, col_filter, col_btn = st.columns([6, 2, 3], vertical_alignment="bottom")
+    with col_header:
+        st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
+    with col_filter:
+        tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
+    with col_btn:
+        st.button("Unduh PDF", use_container_width=True)
+    st.divider()
+
+    # Perhitungan KPI
+    df_tahun_ini = df[df['Tahun'] == tahun]
+    df_tahun_lalu = df[df['Tahun'] == tahun - 1]
+    total_provinsi = df_tahun_ini.shape[0]
+
+    klaster_dominan, kpi1_teks = "-", "0 Prov"
+    persentase_naik, persentase_turun = 0.0, 0.0
+    provinsi_tertinggi, pertumbuhan_tertinggi = "-", 0.0
+
+    if total_provinsi > 0:
+        counts = df_tahun_ini['Cluster_raw'].value_counts()
+        klaster_dominan, jumlah = counts.idxmax(), counts.max()
+        kpi1_teks = f"{jumlah}/{total_provinsi} Prov"
+
+    if not df_tahun_lalu.empty and not df_tahun_ini.empty:
+        df_merged = pd.merge(
+            df_tahun_ini[['Provinsi', 'Cluster_raw', 'Server_Based']], 
+            df_tahun_lalu[['Provinsi', 'Cluster_raw', 'Server_Based']], 
+            on='Provinsi', suffixes=('_now', '_prev')
+        )
+        if not df_merged.empty:
+            persentase_naik = ((df_merged['Cluster_raw_now'] > df_merged['Cluster_raw_prev']).sum() / total_provinsi) * 100
+            persentase_turun = ((df_merged['Cluster_raw_now'] < df_merged['Cluster_raw_prev']).sum() / total_provinsi) * 100
+            df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
+            idx = df_merged['growth'].idxmax()
+            provinsi_tertinggi, pertumbuhan_tertinggi = df_merged.loc[idx, 'Provinsi'], df_merged.loc[idx, 'growth']
+
+    # Tampilan KPI
+    st.subheader(f"KPI Tahun {tahun}")
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric(f"Dominan: Klaster {klaster_dominan}", kpi1_teks)
+    k2.metric("Naik Klaster", f"{persentase_naik:.1f}%", "vs Tahun Lalu")
+    k3.metric("Turun Klaster", f"{persentase_turun:.1f}%", "- vs Tahun Lalu", delta_color="inverse")
+    k4.metric(f"Top Growth ({provinsi_tertinggi})", f"{pertumbuhan_tertinggi:.1f}%", "Server Based")
+    st.divider()
+
+    # Visual Utama
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("### Peta Klaster Provinsi")
+        st.info("Visualisasi peta akan muncul di sini.")
+    with c2:
+        st.markdown("### Tren Provinsi per Klaster")
+        fig = px.bar(df.groupby(['Tahun', 'Cluster_raw']).size().reset_index(name='Jumlah'), 
+                     x='Tahun', y='Jumlah', color='Cluster_raw', barmode='stack', color_discrete_sequence=px.colors.qualitative.Set2)
+        st.plotly_chart(fig, use_container_width=True)
+
+# 3. HALAMAN PETA
+elif halaman == "Peta Klaster Provinsi":
+    st.title("Peta Klaster Provinsi")
+    with st.sidebar:
+        st.subheader("Filter Peta")
+        tahun_peta = st.slider("Tahun", 2021, 2025, 2025)
+        klaster_list = df['Cluster_raw'].unique().tolist()
+        selected_klaster = st.multiselect("Tampilkan Klaster", klaster_list, default=klaster_list)
+
+    df_map = df[(df['Tahun'] == tahun_peta) & (df['Cluster_raw'].isin(selected_klaster))]
+    
+    try:
+        with open("indonesia.geojson", "r") as f:
+            geojson = json.load(f)
+        fig = px.choropleth(
+            df_map, geojson=geojson, locations='Provinsi', featureidkey="properties.name",
+            color='Cluster_raw', color_discrete_sequence=px.colors.qualitative.Set2,
+            hover_name='Provinsi', projection="mercator"
+        )
+        fig.update_geos(fitbounds="locations", visible=False)
+        st.plotly_chart(fig, use_container_width=True)
+    except:
+        st.error("File GeoJSON tidak ditemukan.")
+
+# 4. HALAMAN LAINNYA
+elif halaman == "Dinamika Temporal":
+    st.title("Dinamika Temporal")
+elif halaman == "Profil & Perbandingan Provinsi":
+    st.title("Profil & Perbandingan Provinsi")
+elif halaman == "Metodologi & Validitas Model":
+    st.title("Metodologi & Validitas Model")

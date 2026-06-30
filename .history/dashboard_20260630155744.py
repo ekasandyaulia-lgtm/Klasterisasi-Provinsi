@@ -53,19 +53,19 @@ if halaman == "Overview":
     provinsi_tertinggi, pertumbuhan_tertinggi = "-", 0.0
 
     if total_provinsi > 0:
-        counts = df_tahun_ini['Target_Semantic'].value_counts()
+        counts = df_tahun_ini['Cluster_raw'].value_counts()
         klaster_dominan, jumlah = counts.idxmax(), counts.max()
         kpi1_teks = f"{jumlah}/{total_provinsi} Prov"
 
     if not df_tahun_lalu.empty and not df_tahun_ini.empty:
         df_merged = pd.merge(
-            df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']], 
-            df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']], 
+            df_tahun_ini[['Provinsi', 'Cluster_raw', 'Server_Based']], 
+            df_tahun_lalu[['Provinsi', 'Cluster_raw', 'Server_Based']], 
             on='Provinsi', suffixes=('_now', '_prev')
         )
         if not df_merged.empty:
-            persentase_naik = ((df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
-            persentase_turun = ((df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
+            persentase_naik = ((df_merged['Cluster_raw_now'] > df_merged['Cluster_raw_prev']).sum() / total_provinsi) * 100
+            persentase_turun = ((df_merged['Cluster_raw_now'] < df_merged['Cluster_raw_prev']).sum() / total_provinsi) * 100
             df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
             idx = df_merged['growth'].idxmax()
             provinsi_tertinggi, pertumbuhan_tertinggi = df_merged.loc[idx, 'Provinsi'], df_merged.loc[idx, 'growth']
@@ -92,7 +92,7 @@ if halaman == "Overview":
                 fig_map = px.choropleth(
                     df_map_overview, geojson=geojson_overview, locations='Provinsi',
                     featureidkey="properties.name",
-                    color='Target_Semantic',
+                    color='Cluster_raw',
                     color_discrete_sequence=px.colors.qualitative.Set2,
                     hover_name='Provinsi',
                     projection="mercator"
@@ -111,8 +111,8 @@ if halaman == "Overview":
                 st.error("File GeoJSON tidak ditemukan.")
     with c2:
         st.markdown("### Tren Provinsi per Klaster")
-        fig = px.bar(df.groupby(['Tahun', 'Target_Semantic']).size().reset_index(name='Jumlah'), 
-                     x='Tahun', y='Jumlah', color='Target_Semantic', barmode='stack', color_discrete_sequence=px.colors.qualitative.Set2)
+        fig = px.bar(df.groupby(['Tahun', 'Cluster_raw']).size().reset_index(name='Jumlah'), 
+                     x='Tahun', y='Jumlah', color='Cluster_raw', barmode='stack', color_discrete_sequence=px.colors.qualitative.Set2)
         st.plotly_chart(fig, use_container_width=True)
 
 # 3. HALAMAN PETA
@@ -125,7 +125,7 @@ elif halaman == "Peta Klaster Provinsi":
         st.subheader("Filter Peta")
         tahun_peta = st.slider("Tahun", 2021, 2025, 2025)
 
-        klaster_list = sorted(df['Target_Semantic'].unique().tolist())
+        klaster_list = sorted(df['Cluster_raw'].unique().tolist())
         selected_klaster = st.multiselect(
             "Tampilkan Klaster", klaster_list, default=klaster_list
         )
@@ -139,19 +139,19 @@ elif halaman == "Peta Klaster Provinsi":
         )
 
     if mode_tampilan == "Peta Statis":
-        df_map = df[(df['Tahun'] == tahun_peta) & (df['Target_Semantic'].isin(selected_klaster))].copy()
+        df_map = df[(df['Tahun'] == tahun_peta) & (df['Cluster_raw'].isin(selected_klaster))].copy()
     else:
-        df_map = df[(df['Tahun'].between(2021, 2025)) & (df['Target_Semantic'].isin(selected_klaster))].copy()
+        df_map = df[(df['Tahun'].between(2021, 2025)) & (df['Cluster_raw'].isin(selected_klaster))].copy()
 
     if cari_provinsi:
         df_map = df_map[df_map['Provinsi'].str.contains(cari_provinsi, case=False, na=False)]
 
     with col_kontrol:
         st.markdown("**Legenda**")
-        df_legenda = df[(df['Tahun'] == tahun_peta) & (df['Target_Semantic'].isin(selected_klaster))]
+        df_legenda = df[(df['Tahun'] == tahun_peta) & (df['Cluster_raw'].isin(selected_klaster))]
         warna_klaster = dict(zip(klaster_list, px.colors.qualitative.Set2))
         for k in klaster_list:
-            jml = (df_legenda['Target_Semantic'] == k).sum()
+            jml = (df_legenda['Cluster_raw'] == k).sum()
             warna = warna_klaster.get(k, "#999999")
             st.markdown(
                 f"<div style='display:flex;align-items:center;gap:8px;margin-bottom:4px;'>"
@@ -165,7 +165,7 @@ elif halaman == "Peta Klaster Provinsi":
             with open("indonesia.geojson", "r") as f:
                 geojson = json.load(f)
 
-            hover_cols = ['Target_Semantic']
+            hover_cols = ['Cluster_raw']
             for kolom in ['Server_Based', 'Mobile_Based', 'Web_Based', 'Cloud_Based']:
                 if kolom in df.columns:
                     hover_cols.append(kolom)
@@ -174,7 +174,7 @@ elif halaman == "Peta Klaster Provinsi":
                 fig = px.choropleth(
                     df_map, geojson=geojson, locations='Provinsi',
                     featureidkey="properties.name",
-                    color='Target_Semantic',
+                    color='Cluster_raw',
                     color_discrete_sequence=px.colors.qualitative.Set2,
                     hover_name='Provinsi',
                     hover_data=hover_cols,
@@ -184,7 +184,7 @@ elif halaman == "Peta Klaster Provinsi":
                 fig = px.choropleth(
                     df_map, geojson=geojson, locations='Provinsi',
                     featureidkey="properties.name",
-                    color='Target_Semantic',
+                    color='Cluster_raw',
                     color_discrete_sequence=px.colors.qualitative.Set2,
                     hover_name='Provinsi',
                     hover_data=hover_cols,
@@ -220,7 +220,7 @@ elif halaman == "Peta Klaster Provinsi":
             if not detail.empty:
                 detail = detail.iloc[0]
                 dkol = st.columns(5)
-                dkol[0].metric("Klaster", detail['Target_Semantic'])
+                dkol[0].metric("Klaster", detail['Cluster_raw'])
                 for i, kolom in enumerate(['Server_Based', 'Mobile_Based', 'Web_Based', 'Cloud_Based']):
                     if kolom in detail and i + 1 < len(dkol):
                         dkol[i + 1].metric(kolom, detail[kolom])
