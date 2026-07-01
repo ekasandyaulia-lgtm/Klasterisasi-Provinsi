@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.express as px
 from streamlit_option_menu import option_menu
 import json
@@ -374,27 +372,32 @@ elif halaman == "Dinamika Temporal":
     st.divider()
 
     with st.expander("Evaluasi Stabilitas Klaster per Tahun (Metodologi)", expanded=False):
-        st.markdown("Metrik evaluasi model K-Means (k=4) dari 2021 hingga 2025 untuk melihat konsistensi segmentasi klaster:") 
+        st.markdown("Metrik evaluasi model K-Means (k=4) dari 2021 hingga 2025 untuk melihat konsistensi segmentasi klaster:")
+        
+        # Data metrik diekstrak dari hasil csv disimpan di df_metrics
+        # df_metrics = pd.read_csv("metrics_results.csv")
+        
+        
         m1, m2, m3, m4 = st.columns(4)
         
-        fig = plt.figure(figsize=(15, 10))
-        metrics_to_plot = df_metrics.columns
-        
-        for i, metric in enumerate(metrics_to_plot, 1):
-            plt.subplot(len(metrics_to_plot), 1, i)
-            sns.lineplot(data=df_metrics, x=df_metrics.index, y=metric, markers=True, marker = 'o')
-            plt.title(f'{metric} per Tahun', fontsize=12)
-            plt.xlabel('Tahun', fontsize=10)
-            plt.ylabel(metric, fontsize=10)
-            plt.grid(True, linestyle='--', alpha=0.7)  
-            
-            for x, y in zip(df_metrics.index, df_metrics[metric]):
-                plt.text(x, y, f'{y:.2f}', fontsize=8, ha='right', va='bottom', fontsize=8)
-        
-        plt.suptitle("Evaluasi Stabilitas Klaster k=4 per Tahun", fontsize=16, y=1.02)
-        plt.tight_layout(react=[0, 0, 1, 0.98])
+        def plot_metric(df, y_col, title, color):
+            fig = px.line(df, x='Tahun', y=y_col, markers=True, color_discrete_sequence=[color])
+            fig.update_layout(
+                height=250, margin=dict(l=20, r=20, t=40, b=20),
+                title=dict(text=title, font=dict(size=13))
+            )
+            fig.update_xaxes(dtick=1, title=None)
+            fig.update_yaxes(title=None)
+            return fig
 
-        st.pyplot(fig)
+        with m1:
+            st.plotly_chart(plot_metric(df_metrics, 'WCSS', 'WCSS<br>*(Rendah = Baik)*', '#E74C3C'), use_container_width=True)
+        with m2:
+            st.plotly_chart(plot_metric(df_metrics, 'Silhouette Score', 'Silhouette Score<br>*(Mendekati 1 = Baik)*', '#2ECC71'), use_container_width=True)
+        with m3:
+            st.plotly_chart(plot_metric(df_metrics, 'Calinski-Harabasz Score', 'Calinski-Harabasz<br>*(Tinggi = Baik)*', '#3498DB'), use_container_width=True)
+        with m4:
+            st.plotly_chart(plot_metric(df_metrics, 'Davies-Bouldin Score', 'Davies-Bouldin<br>*(Rendah = Baik)*', '#F1C40F'), use_container_width=True)
 
 elif halaman == "Profil & Perbandingan Provinsi":
     st.title("Profil & Perbandingan Provinsi")
