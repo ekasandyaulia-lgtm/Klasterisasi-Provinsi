@@ -375,9 +375,7 @@ elif halaman == "Dinamika Temporal":
 
     with st.expander("Evaluasi Stabilitas Klaster per Tahun (Metodologi)", expanded=False):
         st.markdown("Metrik evaluasi model K-Means (k=4) dari 2021 hingga 2025 untuk melihat konsistensi segmentasi klaster:") 
-        
-        if 'Tahun' in df_metrics.columns:
-            df_metrics = df_metrics.set_index('Tahun')
+        m1, m2, m3, m4 = st.columns(4)
         
         fig = plt.figure(figsize=(15, 10))
         metrics_to_plot = df_metrics.columns
@@ -389,8 +387,7 @@ elif halaman == "Dinamika Temporal":
             plt.xlabel('Tahun', fontsize=10)
             plt.ylabel(metric, fontsize=10)
             plt.grid(True, linestyle='--', alpha=0.7)  
-            plt.xticks(df_metrics.index)
-                        
+            
             for x, y in zip(df_metrics.index, df_metrics[metric]):
                 plt.text(x, y, f'{y:.2f}', fontsize=8, ha='right', va='bottom')
         
