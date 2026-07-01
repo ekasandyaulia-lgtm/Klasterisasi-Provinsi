@@ -442,10 +442,9 @@ elif halaman == "Profil & Perbandingan Provinsi":
         st.divider()
 
         col_radar, col_line = st.columns(2)
-        
-        # --- BAGIAN HEATMAP (PENGGANTI RADAR CHART) ---
+
         with col_radar:
-            st.subheader("Profil Kekuatan Indikator (Heatmap)")
+            st.subheader("Perbandingan Profil Indikator (Radar Chart)")
             
             tahun_radar = st.selectbox(
                 "Pilih Tahun Analisis Kinerja:", 
@@ -454,7 +453,8 @@ elif halaman == "Profil & Perbandingan Provinsi":
             )
             
             st.markdown(
-                f"<small><i>Warna yang lebih gelap menunjukkan nilai indikator yang lebih tinggi/kuat pada skala 0-100 untuk tahun {tahun_radar}.</i></small>",
+                f"<small><i>Nilai telah dinormalisasi ke skala 0–100 berdasarkan nilai minimum-maksimum nasional "
+                f"untuk perbandingan pola kekuatan relatif pada tahun {tahun_radar}.</i></small>",
                 unsafe_allow_html=True
             )
 
@@ -463,31 +463,38 @@ elif halaman == "Profil & Perbandingan Provinsi":
                 (df_norm['Tahun'] == tahun_radar)
             ]
 
-            if not df_radar_filtered.empty:
-                df_heatmap = df_radar_filtered.set_index('Provinsi')[indikator_cols]
-                df_heatmap.columns = [ind_labels[col] for col in df_heatmap.columns]
+            fig_radar = go.Figure()
 
-                fig_heat = px.imshow(
-                    df_heatmap,
-                    text_auto=".1f",
-                    aspect="auto",
-                    color_continuous_scale="Blues",
-                    labels=dict(x="Indikator", y="Provinsi", color="Skor")
-                )
-                
-                fig_heat.update_layout(
-                    height=420, 
-                    margin=dict(l=20, r=20, t=30, b=30),
-                    coloraxis_showscale=False 
-                )
-                fig_heat.update_xaxes(side="bottom", tickfont=dict(size=10))
-                fig_heat.update_yaxes(tickfont=dict(size=11))
-                
-                st.plotly_chart(fig_heat, use_container_width=True)
-            else:
-                st.warning("Data tidak tersedia untuk kombinasi filter ini.")
+            categories = [ind_labels[col] for col in indikator_cols] + [ind_labels[indikator_cols[0]]]
 
-        # --- BAGIAN LINE CHART TREN ---
+            for prov in selected_provinsi:
+                df_prov = df_radar_filtered[df_radar_filtered['Provinsi'] == prov]
+                if not df_prov.empty:
+                    r_values = df_prov[indikator_cols].iloc[0].tolist()
+                    r_values.append(r_values[0])
+
+                    fig_radar.add_trace(go.Scatterpolar(
+                        r=r_values,
+                        theta=categories,
+                        fill='toself',
+                        name=prov
+                    ))
+
+            fig_radar.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, 100],
+                        tickfont=dict(size=10)
+                    )
+                ),
+                showlegend=True,
+                height=420,
+                margin=dict(l=50, r=50, t=30, b=30),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5)
+            )
+            st.plotly_chart(fig_radar, use_container_width=True)
+
         with col_line:
             st.subheader("Tren Historis Indikator (2021–2025)")
             st.markdown("<small><i>Menampilkan visualisasi terpisah untuk memantau pergerakan nilai aktual.</i></small>", unsafe_allow_html=True)
@@ -533,7 +540,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
                 mime="text/csv",
                 help="Klik di sini untuk mengunduh berkas tabel mentah dalam format CSV."
             )
-
+            
 elif halaman == "Metodologi & Validitas Model":
     st.title("🛡️ Metodologi & Validitas Model")
     st.markdown(
@@ -542,6 +549,9 @@ elif halaman == "Metodologi & Validitas Model":
     )
     st.divider()
 
+    # ==============================================================
+    # 1. RINGKASAN ALUR METODOLOGI (Diagram Alir Horizontal)
+    # ==============================================================
     st.subheader("1. Ringkasan Alur Pemrosesan Data & Pemodelan")
     st.markdown(
         "Alur pemrosesan data ujung-ke-ujung (*end-to-end*) dirancang untuk memastikan "
@@ -569,7 +579,9 @@ elif halaman == "Metodologi & Validitas Model":
     </div>
     """, unsafe_allow_html=True)
 
-
+    # ==============================================================
+    # 2. TABEL PARAMETER MODEL
+    # ==============================================================
     st.subheader("2. Konfigurasi Parameter Hiperparameter Model")
     
     param_data = {

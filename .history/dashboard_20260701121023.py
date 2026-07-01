@@ -533,7 +533,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
                 mime="text/csv",
                 help="Klik di sini untuk mengunduh berkas tabel mentah dalam format CSV."
             )
-
+                     
 elif halaman == "Metodologi & Validitas Model":
     st.title("🛡️ Metodologi & Validitas Model")
     st.markdown(
@@ -542,6 +542,9 @@ elif halaman == "Metodologi & Validitas Model":
     )
     st.divider()
 
+    # ==============================================================
+    # 1. RINGKASAN ALUR METODOLOGI (Diagram Alir Horizontal)
+    # ==============================================================
     st.subheader("1. Ringkasan Alur Pemrosesan Data & Pemodelan")
     st.markdown(
         "Alur pemrosesan data ujung-ke-ujung (*end-to-end*) dirancang untuk memastikan "
@@ -569,7 +572,9 @@ elif halaman == "Metodologi & Validitas Model":
     </div>
     """, unsafe_allow_html=True)
 
-
+    # ==============================================================
+    # 2. TABEL PARAMETER MODEL
+    # ==============================================================
     st.subheader("2. Konfigurasi Parameter Hiperparameter Model")
     
     param_data = {
