@@ -243,7 +243,15 @@ if halaman == "Overview":
     with col_filter:
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
     with col_btn:
-            pdf_placeholder = st.empty()
+            contoh_pdf = b"Data placeholder PDF. Integrasikan library seperti fpdf/reportlab untuk men-generate grafik dan teks dashboard ke PDF."
+            st.download_button(
+                label="Unduh PDF", 
+                data=contoh_pdf, 
+                file_name=f"Laporan_Overview_{tahun}.pdf", 
+                mime="application/pdf", 
+                use_container_width=True,
+                help="Klik untuk mengunduh rekap laporan tahun ini dalam format PDF"
+            )
     st.divider()
 
     # Perhitungan KPI
