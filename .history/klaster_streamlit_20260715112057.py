@@ -792,7 +792,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
             )
 
 elif halaman == "Metodologi & Validitas Model":
-    st.title("Metodologi & Validitas Model")
+    st.title("🛡️ Metodologi & Validitas Model")
     st.markdown(
         "Halaman ini menyajikan dokumentasi teknis, pengujian validitas instrumen, "
         "dan transparansi algoritma yang ditujukan bagi penelaah akademis, peneliti, serta auditor internal."

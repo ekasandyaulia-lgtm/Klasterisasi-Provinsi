@@ -336,9 +336,9 @@ if halaman == "Overview":
     st.subheader(f"KPI Tahun {tahun}")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric(f"Dominan: Klaster {klaster_dominan}", kpi1_teks)
-    k2.metric("Naik Klaster", f"{persentase_naik} Provinsi", "vs Tahun Lalu")
-    k3.metric("Turun Klaster", f"{persentase_turun} Provinsi", "- vs Tahun Lalu", delta_color="inverse")
-    k4.metric(label=f"Top Growth Server Based ({provinsi_tertinggi})", value=f"{pertumbuhan_tertinggi:.1f}%")
+    k2.metric("Naik Klaster", f"{persentase_naik}%", "vs Tahun Lalu")
+    k3.metric("Turun Klaster", f"{persentase_turun}%", "- vs Tahun Lalu", delta_color="inverse")
+    k4.metric(label=f"Top Growth Server Based ({provinsi_tertinggi})", value=f"{pertumbuhan_tertinggi}%")
     st.divider()
 
     # Visual Utama
@@ -792,7 +792,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
             )
 
 elif halaman == "Metodologi & Validitas Model":
-    st.title("Metodologi & Validitas Model")
+    st.title("🛡️ Metodologi & Validitas Model")
     st.markdown(
         "Halaman ini menyajikan dokumentasi teknis, pengujian validitas instrumen, "
         "dan transparansi algoritma yang ditujukan bagi penelaah akademis, peneliti, serta auditor internal."

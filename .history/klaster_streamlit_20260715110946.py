@@ -252,8 +252,8 @@ if halaman == "Overview":
     total_provinsi = df_tahun_ini.shape[0]
 
     klaster_dominan, kpi1_teks = "-", "0 Prov"
-    persentase_naik, persentase_turun = 0, 0
-    provinsi_tertinggi, pertumbuhan_tertinggi = "-", 0
+    persentase_naik, persentase_turun = 0.0, 0.0
+    provinsi_tertinggi, pertumbuhan_tertinggi = "-", 0.0
 
     if total_provinsi > 0:
         counts = df_tahun_ini['Target_Semantic'].value_counts()
@@ -267,8 +267,8 @@ if halaman == "Overview":
             on='Provinsi', suffixes=('_now', '_prev')
         )
         if not df_merged.empty:
-            persentase_naik = (df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum()
-            persentase_turun = (df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum()
+            persentase_naik = ((df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
+            persentase_turun = ((df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
             df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
             idx = df_merged['growth'].idxmax()
             provinsi_tertinggi, pertumbuhan_tertinggi = df_merged.loc[idx, 'Provinsi'], df_merged.loc[idx, 'growth']
@@ -287,8 +287,8 @@ if halaman == "Overview":
     total_provinsi = df_tahun_ini.shape[0]
  
     klaster_dominan, kpi1_teks = "-", "0 Prov"
-    persentase_naik, persentase_turun = 0, 0
-    provinsi_tertinggi, pertumbuhan_tertinggi = "-", 0
+    persentase_naik, persentase_turun = 0.0, 0.0
+    provinsi_tertinggi, pertumbuhan_tertinggi = "-", 0.0
     cluster_counts_dict = {}
 
     if total_provinsi > 0:
@@ -304,8 +304,8 @@ if halaman == "Overview":
             on='Provinsi', suffixes=('_now', '_prev')
         )
         if not df_merged.empty:
-            persentase_naik = (df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum() 
-            persentase_turun = (df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum() 
+            persentase_naik = ((df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
+            persentase_turun = ((df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum() / total_provinsi) * 100
             df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
             idx = df_merged['growth'].idxmax()
             provinsi_tertinggi, pertumbuhan_tertinggi = df_merged.loc[idx, 'Provinsi'], df_merged.loc[idx, 'growth']
@@ -336,8 +336,8 @@ if halaman == "Overview":
     st.subheader(f"KPI Tahun {tahun}")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric(f"Dominan: Klaster {klaster_dominan}", kpi1_teks)
-    k2.metric("Naik Klaster", f"{persentase_naik} Provinsi", "vs Tahun Lalu")
-    k3.metric("Turun Klaster", f"{persentase_turun} Provinsi", "- vs Tahun Lalu", delta_color="inverse")
+    k2.metric("Naik Klaster", f"{persentase_naik:.1f}%", "vs Tahun Lalu")
+    k3.metric("Turun Klaster", f"{persentase_turun:.1f}%", "- vs Tahun Lalu", delta_color="inverse")
     k4.metric(label=f"Top Growth Server Based ({provinsi_tertinggi})", value=f"{pertumbuhan_tertinggi:.1f}%")
     st.divider()
 
@@ -792,7 +792,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
             )
 
 elif halaman == "Metodologi & Validitas Model":
-    st.title("Metodologi & Validitas Model")
+    st.title("🛡️ Metodologi & Validitas Model")
     st.markdown(
         "Halaman ini menyajikan dokumentasi teknis, pengujian validitas instrumen, "
         "dan transparansi algoritma yang ditujukan bagi penelaah akademis, peneliti, serta auditor internal."
@@ -933,7 +933,7 @@ elif halaman == "Metodologi & Validitas Model":
             height=550,
             xaxis_title="Komponen Utama 1 (PCA1) — Menjelaskan variansi mayoritas data",
             yaxis_title="Komponen Utama 2 (PCA2) — Menjelaskan variansi sisa",
-            legend=dict(title="Klaster Semantik", orientation="h", yanchor="top", y=-0.25, xanchor="center", x=0.5)
+            legend=dict(title=dict(text="Klaster Semantik"), side="top center"), orientation="h", yanchor="top", y=-0.25, xanchor="center", x=0.5
         )
         st.plotly_chart(fig_scatter_pca, use_container_width=True)
     else:
