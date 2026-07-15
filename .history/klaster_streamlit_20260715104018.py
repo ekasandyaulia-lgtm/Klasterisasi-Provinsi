@@ -13,8 +13,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, image, PageBreak
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
 
 # Konfigurasi Halaman
 st.set_page_config(page_title="Dashboard Analisis Klaster Provinsi", layout="wide")
@@ -1218,9 +1218,13 @@ elif halaman == "Metodologi & Validitas Model":
         )
 
     with dl_col2:
-        pdf_bytes = buat_pdf_metodologi(
-            df, df_metrics_tampil, palet_warna, warna_default, param_data, tahun_metodologi   
-        )
+        pdf_bytes = buat_pdf_metodologi([
+            "Laporan Kajian Metodologi",
+            "Struktur Spasial Klaster Digital",
+            "",
+            "Dokumen ringkasan metodologi model K-Means (k=4)",
+            "untuk segmentasi digital provinsi di Indonesia."
+        ])
         st.download_button(
             label="📥 Unduh Dokumen Metodologi (PDF)",
             data=pdf_bytes,
