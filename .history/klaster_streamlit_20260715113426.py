@@ -237,11 +237,13 @@ with st.sidebar:
 
 # Overview Page
 if halaman == "Overview":
-    col_header, col_filter = st.columns([8, 3], vertical_alignment="bottom")
+    col_header, col_filter, col_btn = st.columns([6, 2, 3], vertical_alignment="bottom")
     with col_header:
         st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
     with col_filter:
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
+    with col_btn:
+            pdf_placeholder = st.empty()
     st.divider()
 
     # Perhitungan KPI
@@ -315,6 +317,20 @@ if halaman == "Overview":
                 row = df_merged.nlargest(1, 'growth').iloc[0]
             provinsi_tertinggi = row['Provinsi']
             pertumbuhan_tertinggi = row['growth']
+    pdf_bytes = generate_overview_pdf(
+        tahun, total_provinsi, klaster_dominan, kpi1_teks,
+        persentase_naik, persentase_turun,
+        provinsi_tertinggi, pertumbuhan_tertinggi,
+        cluster_counts_dict
+    )
+    pdf_placeholder.download_button(
+        label="Unduh PDF",
+        data=pdf_bytes,
+        file_name=f"Laporan_Overview_{tahun}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+        help="Klik untuk mengunduh rekap laporan tahun ini dalam format PDF"
+    )
 
     # Tampilan KPI
     st.subheader(f"KPI Tahun {tahun}")
@@ -986,7 +1002,7 @@ elif halaman == "Metodologi & Validitas Model":
         story.append(Spacer(1, 10))
  
         # Ringkasan Alur Pemrosesan Data & Pemodelan
-        story.append(Paragraph("Ringkasan Alur Pemrosesan Data & Pemodelan", style_subjudul))
+        story.append(Paragraph("1. Ringkasan Alur Pemrosesan Data & Pemodelan", style_subjudul))
         story.append(Paragraph(
             "Alur pemrosesan data ujung-ke-ujung (<i>end-to-end</i>) dirancang untuk memastikan "
             "kestabilan model dari bias skala dan skewness distribusi variabel ekonomi:",

@@ -242,6 +242,8 @@ if halaman == "Overview":
         st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
     with col_filter:
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
+    with col_btn:
+            pdf_placeholder = st.empty()
     st.divider()
 
     # Perhitungan KPI
@@ -315,6 +317,20 @@ if halaman == "Overview":
                 row = df_merged.nlargest(1, 'growth').iloc[0]
             provinsi_tertinggi = row['Provinsi']
             pertumbuhan_tertinggi = row['growth']
+    pdf_bytes = generate_overview_pdf(
+        tahun, total_provinsi, klaster_dominan, kpi1_teks,
+        persentase_naik, persentase_turun,
+        provinsi_tertinggi, pertumbuhan_tertinggi,
+        cluster_counts_dict
+    )
+    pdf_placeholder.download_button(
+        label="Unduh PDF",
+        data=pdf_bytes,
+        file_name=f"Laporan_Overview_{tahun}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+        help="Klik untuk mengunduh rekap laporan tahun ini dalam format PDF"
+    )
 
     # Tampilan KPI
     st.subheader(f"KPI Tahun {tahun}")

@@ -242,6 +242,8 @@ if halaman == "Overview":
         st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
     with col_filter:
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
+    with col_btn:
+            pdf_placeholder = st.empty()
     st.divider()
 
     # Perhitungan KPI

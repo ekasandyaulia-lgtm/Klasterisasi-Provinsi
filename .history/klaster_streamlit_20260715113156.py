@@ -237,11 +237,13 @@ with st.sidebar:
 
 # Overview Page
 if halaman == "Overview":
-    col_header, col_filter = st.columns([8, 3], vertical_alignment="bottom")
+    col_header, col_filter, col_btn = st.columns([6, 2, 3], vertical_alignment="bottom")
     with col_header:
         st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
     with col_filter:
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
+    with col_btn:
+            pdf_placeholder = st.empty()
     st.divider()
 
     # Perhitungan KPI
@@ -315,6 +317,20 @@ if halaman == "Overview":
                 row = df_merged.nlargest(1, 'growth').iloc[0]
             provinsi_tertinggi = row['Provinsi']
             pertumbuhan_tertinggi = row['growth']
+    pdf_bytes = generate_overview_pdf(
+        tahun, total_provinsi, klaster_dominan, kpi1_teks,
+        persentase_naik, persentase_turun,
+        provinsi_tertinggi, pertumbuhan_tertinggi,
+        cluster_counts_dict
+    )
+    pdf_placeholder.download_button(
+        label="Unduh PDF",
+        data=pdf_bytes,
+        file_name=f"Laporan_Overview_{tahun}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+        help="Klik untuk mengunduh rekap laporan tahun ini dalam format PDF"
+    )
 
     # Tampilan KPI
     st.subheader(f"KPI Tahun {tahun}")
@@ -985,8 +1001,8 @@ elif halaman == "Metodologi & Validitas Model":
         ))
         story.append(Spacer(1, 10))
  
-        # Ringkasan Alur Pemrosesan Data & Pemodelan
-        story.append(Paragraph("Ringkasan Alur Pemrosesan Data & Pemodelan", style_subjudul))
+        # 1. Ringkasan Alur Pemrosesan Data & Pemodelan
+        story.append(Paragraph("1. Ringkasan Alur Pemrosesan Data & Pemodelan", style_subjudul))
         story.append(Paragraph(
             "Alur pemrosesan data ujung-ke-ujung (<i>end-to-end</i>) dirancang untuk memastikan "
             "kestabilan model dari bias skala dan skewness distribusi variabel ekonomi:",
@@ -1020,8 +1036,8 @@ elif halaman == "Metodologi & Validitas Model":
             story.append(Spacer(1, 4))
         story.append(Spacer(1, 8))
  
-        # Konfigurasi Parameter Hiperparameter Model
-        story.append(Paragraph("Konfigurasi Parameter Hiperparameter Model", style_subjudul))
+        # 2. Konfigurasi Parameter Hiperparameter Model
+        story.append(Paragraph("2. Konfigurasi Parameter Hiperparameter Model", style_subjudul))
         data_param_tabel = [["Komponen Model / Arsitektur", "Spesifikasi Teknis / Nilai Kontrol"]]
         for komp, spek in zip(param_data["Komponen Model / Arsitektur"], param_data["Spesifikasi Teknis / Nilai Kontrol"]):
             data_param_tabel.append([komp, spek])
@@ -1038,8 +1054,8 @@ elif halaman == "Metodologi & Validitas Model":
         story.append(tabel_param)
         story.append(Spacer(1, 10))
  
-        # Validitas Internal & Metrik Evaluasi
-        story.append(Paragraph("Validitas Internal & Metrik Evaluasi", style_subjudul))
+        # 3. Validitas Internal & Metrik Evaluasi
+        story.append(Paragraph("3. Validitas Internal & Metrik Evaluasi", style_subjudul))
         story.append(Paragraph(
             "Kinerja struktural pembentukan partisi klaster dievaluasi secara berkala pada setiap run "
             "korpus tahunan untuk menguji stabilitas model matematika:",
@@ -1096,9 +1112,9 @@ elif halaman == "Metodologi & Validitas Model":
             story.append(tabel_gambar_metrik)
         story.append(Spacer(1, 10))
  
-        # Visualisasi Ruang Sebaran Komponen Utama (PCA)
+        # 4. Visualisasi Ruang Sebaran Komponen Utama (PCA)
         story.append(PageBreak())
-        story.append(Paragraph("Visualisasi Ruang Sebaran Komponen Utama (PCA)", style_subjudul))
+        story.append(Paragraph("4. Visualisasi Ruang Sebaran Komponen Utama (PCA)", style_subjudul))
         if 'PCA1' in df.columns and 'PCA2' in df.columns:
             df_pca_pdf = df[df['Tahun'] == tahun_pca]
             fig_pca, ax_pca = plt.subplots(figsize=(6.3, 4.4))
@@ -1122,8 +1138,8 @@ elif halaman == "Metodologi & Validitas Model":
             story.append(Paragraph("Data koordinat komponen utama PCA tidak ditemukan di dataset hasil.", style_body))
         story.append(Spacer(1, 10))
  
-        # Analisis Matriks Karakteristik Centroid
-        story.append(Paragraph("Analisis Matriks Karakteristik Centroid (Dasar Penamaan)", style_subjudul))
+        # 5. Analisis Matriks Karakteristik Centroid
+        story.append(Paragraph("5. Analisis Matriks Karakteristik Centroid (Dasar Penamaan)", style_subjudul))
         story.append(Paragraph(
             "Karakteristik kuantitatif dari rata-rata nilai indikator tertransformasi yang menjadi penentu "
             "klasifikasi dan rujukan pemberian label semantik regional:",
@@ -1151,6 +1167,32 @@ elif halaman == "Metodologi & Validitas Model":
         buf_heat.seek(0)
         story.append(Image(buf_heat, width=14 * cm, height=7.5 * cm))
         story.append(Spacer(1, 10))
+ 
+        # 6. Batasan Teknis & Keterbatasan Model
+        story.append(Paragraph("6. Batasan Teknis & Keterbatasan Model (Limitations)", style_subjudul))
+        story.append(Paragraph(
+            "Aplikasi kebijakan berbasis data spasial wajib mempertimbangkan beberapa restriksi objektif "
+            "berikut guna menghindari kesalahan interpretasi keputusan:",
+            style_body
+        ))
+        story.append(Spacer(1, 4))
+        poin_batasan = [
+            "<b>Granularitas Temporal Makro</b>: Data yang diolah berbasis agregat nilai tahunan "
+            "(<i>annual mean</i>). Pendekatan ini berpotensi mereduksi atau menghilangkan variasi pergerakan "
+            "musiman (<i>seasonal monthly variations</i>) seperti lonjakan transaksi tunai menjelang Idul Fitri "
+            "atau masa libur akhir tahun.",
+            "<b>Anomali Struktural Ibu Kota</b>: Klaster 'Digital Spesialis Non-Tunai' mencerminkan profil "
+            "anomali spasial dan struktur sirkulasi ekonomi unik DKI Jakarta sebagai pusat perputaran uang dan "
+            "kliring nasional. Karakteristik ini tidak dapat dijadikan bahan acuan generalisasi regulasi "
+            "langsung ke wilayah kepulauan lain secara pukul rata.",
+            "<b>Karakteristik Skala RobustScaler</b>: Penyekalaan berbasis median dan interkuartil "
+            "(<i>RobustScaler</i>) sangat handal dalam mengisolasi bias pencilan (<i>outliers</i>), namun tidak "
+            "mengeliminasi ketimpangan kesenjangan ekonomi riil. Provinsi dengan basis volume ekonomi masif "
+            "akan selalu menduduki klaster dominan secara persisten.",
+        ]
+        for poin in poin_batasan:
+            story.append(Paragraph(f"• {poin}", style_body))
+            story.append(Spacer(1, 4))
  
         doc.build(story)
         buffer.seek(0)

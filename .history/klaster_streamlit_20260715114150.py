@@ -34,56 +34,6 @@ palet_warna = {
 }
 warna_default = "#95A5A6"
 
-# Generator PDF Placeholder
-
-def generate_overview_pdf(tahun, total_provinsi, klaster_dominan, kpi1_teks,
-                           persentase_naik, persentase_turun,
-                           provinsi_tertinggi, pertumbuhan_tertinggi,
-                           cluster_counts_dict):
-    """Membuat PDF ringkasan KPI halaman Overview secara nyata (bukan placeholder)."""
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-    y = height - 2.5 * cm
- 
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(2 * cm, y, f"Laporan Overview Dashboard - Tahun {tahun}")
-    y -= 1.2 * cm
- 
-    c.setFont("Helvetica", 11)
-    baris = [
-        f"Total Provinsi Tercatat: {total_provinsi}",
-        f"Klaster Dominan: {klaster_dominan} ({kpi1_teks})",
-        f"Provinsi Naik Klaster (vs tahun lalu): {persentase_naik:.1f}%",
-        f"Provinsi Turun Klaster (vs tahun lalu): {persentase_turun:.1f}%",
-        f"Pertumbuhan Server Based Tertinggi: {provinsi_tertinggi} ({pertumbuhan_tertinggi:.1f}%)",
-    ]
-    for teks in baris:
-        c.drawString(2 * cm, y, teks)
-        y -= 0.7 * cm
- 
-    y -= 0.5 * cm
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(2 * cm, y, "Distribusi Provinsi per Klaster:")
-    y -= 0.7 * cm
- 
-    c.setFont("Helvetica", 10)
-    if cluster_counts_dict:
-        for klaster, jumlah in cluster_counts_dict.items():
-            c.drawString(2.5 * cm, y, f"- {klaster}: {jumlah} provinsi")
-            y -= 0.55 * cm
-    else:
-        c.drawString(2.5 * cm, y, "Tidak ada data untuk tahun ini.")
-        y -= 0.55 * cm
- 
-    c.setFont("Helvetica-Oblique", 8)
-    c.drawString(2 * cm, 1.5 * cm, "Dokumen dihasilkan otomatis oleh Dashboard Analisis Klaster Provinsi.")
- 
-    c.showPage()
-    c.save()
-    buffer.seek(0)
-    return buffer.getvalue()
- 
  
 def _nb_markdown_cell(text):
     return {"cell_type": "markdown", "metadata": {}, "source": text.splitlines(keepends=True)}
@@ -98,126 +48,6 @@ def _nb_code_cell(text):
         "source": text.splitlines(keepends=True),
     }
  
- 
-def generate_notebook_bytes():
-    """Membuat file .ipynb yang valid (JSON sesuai skema nbformat v4), bukan teks biasa."""
-    cells = [
-        _nb_markdown_cell("# K-Means Clustering - Analisis Klaster Provinsi\n\nRingkasan alur pemodelan yang digunakan pada dashboard ini."),
-        _nb_code_cell(
-            "import pandas as pd\n"
-            "import numpy as np\n"
-            "from sklearn.preprocessing import RobustScaler\n"
-            "from sklearn.cluster import KMeans\n"
-            "from sklearn.decomposition import PCA\n"
-            "from scipy.optimize import linear_sum_assignment\n"
-        ),
-        _nb_markdown_cell("## 1. Muat & Agregasi Data Tahunan"),
-        _nb_code_cell(
-            "df_mentah = pd.read_csv('data_mentah_bulanan.csv')\n"
-            "df_tahunan = df_mentah.groupby(['Provinsi', 'Tahun']).mean().reset_index()\n"
-        ),
-        _nb_markdown_cell("## 2. Transformasi log1p & RobustScaler"),
-        _nb_code_cell(
-            "fitur = ['outflow_tunai', 'kartu_atm_debet', 'Server_Based', 'SKNBI_Asal']\n"
-            "X = np.log1p(df_tahunan[fitur])\n"
-            "scaler = RobustScaler()\n"
-            "X_scaled = scaler.fit_transform(X)\n"
-        ),
-        _nb_markdown_cell("## 3. K-Means (k=4) dengan Elbow Method"),
-        _nb_code_cell(
-            "kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)\n"
-            "labels = kmeans.fit_predict(X_scaled)\n"
-            "df_tahunan['Cluster'] = labels\n"
-        ),
-        _nb_markdown_cell("## 4. PCA untuk Visualisasi 2D"),
-        _nb_code_cell(
-            "pca = PCA(n_components=2)\n"
-            "coords = pca.fit_transform(X_scaled)\n"
-            "df_tahunan[['PCA1', 'PCA2']] = coords\n"
-        ),
-        _nb_markdown_cell("## 5. Pelabelan Semantik (Linear Sum Assignment) & Simpan Hasil"),
-        _nb_code_cell(
-            "# Pemetaan label klaster numerik ke label semantik dilakukan di sini\n"
-            "df_tahunan.to_csv('final clustering.csv', index=False)\n"
-        ),
-    ]
-    notebook = {
-        "cells": cells,
-        "metadata": {
-            "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-            "language_info": {"name": "python", "version": "3.10"},
-        },
-        "nbformat": 4,
-        "nbformat_minor": 5,
-    }
-    return json.dumps(notebook, indent=2, ensure_ascii=False).encode("utf-8")
- 
- 
-def generate_metodologi_pdf(param_df, df_metrics_tampil):
-    """Membuat PDF dokumen metodologi & validitas model secara nyata (bukan placeholder)."""
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2 * cm, bottomMargin=2 * cm,
-                             leftMargin=2 * cm, rightMargin=2 * cm)
-    styles = getSampleStyleSheet()
-    story = []
- 
-    story.append(Paragraph("Dokumen Metodologi &amp; Validitas Model", styles["Title"]))
-    story.append(Spacer(1, 10))
-    story.append(Paragraph(
-        "Dokumen ini menyajikan ringkasan teknis metodologi klasterisasi K-Means yang digunakan "
-        "dalam analisis adopsi digital antar provinsi, termasuk konfigurasi parameter, metrik "
-        "evaluasi, serta batasan model.",
-        styles["BodyText"]
-    ))
-    story.append(Spacer(1, 14))
- 
-    story.append(Paragraph("1. Konfigurasi Parameter Model", styles["Heading2"]))
-    tabel_param = [list(param_df.columns)] + param_df.astype(str).values.tolist()
-    t1 = Table(tabel_param, colWidths=[7 * cm, 9.5 * cm])
-    t1.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#34495e")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f5f6f7")]),
-    ]))
-    story.append(t1)
-    story.append(Spacer(1, 16))
- 
-    story.append(Paragraph("2. Metrik Evaluasi Model per Tahun", styles["Heading2"]))
-    df_metrik_str = df_metrics_tampil.copy()
-    for kol in df_metrik_str.select_dtypes(include="number").columns:
-        df_metrik_str[kol] = df_metrik_str[kol].round(4)
-    tabel_metrik = [list(df_metrik_str.columns)] + df_metrik_str.astype(str).values.tolist()
-    t2 = Table(tabel_metrik)
-    t2.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f5f6f7")]),
-    ]))
-    story.append(t2)
-    story.append(Spacer(1, 16))
- 
-    story.append(Paragraph("3. Batasan Teknis &amp; Keterbatasan Model", styles["Heading2"]))
-    batasan = [
-        "Granularitas Temporal Makro: data diagregasi berbasis rata-rata tahunan sehingga variasi "
-        "musiman (mis. lonjakan transaksi tunai menjelang Idul Fitri) tidak sepenuhnya tertangkap.",
-        "Anomali Struktural Ibu Kota: klaster 'Digital Spesialis Non-Tunai' mencerminkan profil unik "
-        "DKI Jakarta sebagai pusat kliring nasional dan tidak dapat digeneralisasi ke wilayah lain.",
-        "Karakteristik Skala RobustScaler: tahan terhadap outlier namun tidak menghilangkan "
-        "kesenjangan ekonomi riil antarprovinsi.",
-    ]
-    for item in batasan:
-        story.append(Paragraph(f"&bull; {item}", styles["BodyText"]))
-        story.append(Spacer(1, 6))
- 
-    doc.build(story)
-    buffer.seek(0)
-    return buffer.getvalue()
-
 # Sidebar
 with st.sidebar:
     st.title("Navigasi Dashboard")
@@ -237,7 +67,7 @@ with st.sidebar:
 
 # Overview Page
 if halaman == "Overview":
-    col_header, col_filter = st.columns([8, 3], vertical_alignment="bottom")
+    col_header, col_filter, col_btn = st.columns([6, 2, 2], vertical_alignment="bottom")
     with col_header:
         st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
     with col_filter:
@@ -315,6 +145,20 @@ if halaman == "Overview":
                 row = df_merged.nlargest(1, 'growth').iloc[0]
             provinsi_tertinggi = row['Provinsi']
             pertumbuhan_tertinggi = row['growth']
+    pdf_bytes = generate_overview_pdf(
+        tahun, total_provinsi, klaster_dominan, kpi1_teks,
+        persentase_naik, persentase_turun,
+        provinsi_tertinggi, pertumbuhan_tertinggi,
+        cluster_counts_dict
+    )
+    pdf_placeholder.download_button(
+        label="Unduh PDF",
+        data=pdf_bytes,
+        file_name=f"Laporan_Overview_{tahun}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+        help="Klik untuk mengunduh rekap laporan tahun ini dalam format PDF"
+    )
 
     # Tampilan KPI
     st.subheader(f"KPI Tahun {tahun}")
