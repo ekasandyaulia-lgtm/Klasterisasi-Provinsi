@@ -35,8 +35,15 @@ warna_default = "#95A5A6"
 
  
 # Header Navigasi
-col_logo, col_menu = st.columns([2, 9], vertical_alignment="center")
+col_logo, col_menu = st.columns([3, 9], vertical_alignment="center")
  
+with col_logo:
+    st.markdown(
+        "<div style='display:flex;align-items:center;height:54px;'>"
+        "<span style='font-size:40px;font-weight:900;color:#1F2937;'>Dashboard Klaster Provinsi</span>"
+        "</div>",
+        unsafe_allow_html=True
+    )
  
 with col_menu:
     halaman = option_menu(
@@ -83,7 +90,7 @@ st.markdown("<hr style='margin:0 0 20px 0;border:none;border-top:1px solid #E5E7
 if halaman == "Overview":
     col_header, col_filter = st.columns([8, 3], vertical_alignment="bottom")
     with col_header:
-        st.markdown("<h1 style='margin-top: 0; padding-top: 0;'>Klasterisasi Adopsi Transaksi Digital </h1>", unsafe_allow_html=True)
+        st.markdown("<h2 style='margin-top: 0; padding-top: 0;'>Dashboard Analisis Klaster Provinsi</h2>", unsafe_allow_html=True)
     with col_filter:
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
     st.divider()
