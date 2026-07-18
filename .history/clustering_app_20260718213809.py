@@ -21,9 +21,9 @@ st.set_page_config(page_title="Dashboard Analisis Klaster Provinsi", layout="wid
 # Cache Data
 @st.cache_data
 def load_data():
-    return pd.read_csv("final clustering.csv"), pd.read_csv("metrics_results.csv"),  pd.read_csv("centroids_cluster.csv")
+    return pd.read_csv("final clustering.csv"), pd.read_csv("metrics_results.csv")
 
-df, df_metrics, df_centroids = load_data()
+df, df_metrics = load_data()
 
 palet_warna = {
             "Digital Maju": "#00B871",
@@ -427,6 +427,10 @@ elif halaman == "Dinamika Temporal":
 
 elif halaman == "Profil & Perbandingan Provinsi":
     st.title("Profil & Perbandingan Provinsi")
+    st.markdown(
+        "Halaman ini memungkinkan analisis mendalam untuk membandingkan profil adopsi digital "
+        "serta tren historis antar provinsi."
+    )
     st.divider()
 
     provinsi_list = sorted(df['Provinsi'].unique().tolist())
@@ -469,7 +473,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
                     st.subheader("Perbandingan Nilai Aktual Indikator Seluruh Tahun")
                     
                     st.markdown(
-                        "<small><i>Menampilkan perbandingan nilai transaksi aktual antar provinsi terpilih.</i></small>",
+                        "<small><i>Menampilkan perbandingan nilai transaksi aktual antar provinsi terpilih dari seluruh tahun (Stacked). Skala sumbu Y menyesuaikan otomatis.</i></small>",
                         unsafe_allow_html=True
                     )
 
@@ -519,7 +523,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
                     else:
                         st.warning("Data tidak tersedia untuk kombinasi filter ini.")
 
- # Line Chart
+        # Line Chart
         with col_line:
             st.subheader("Tren Historis Indikator (2021–2025)")
             st.markdown("<small><i>Menampilkan visualisasi terpisah untuk memantau pergerakan nilai aktual.</i></small>", unsafe_allow_html=True)
@@ -534,22 +538,14 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         x='Tahun', 
                         y=col_name, 
                         color='Provinsi',
-                        color_discrete_sequence=px.colors.qualitative.Set2, # Palet warna baru
                         title=f"<b>{ind_labels[col_name]}</b>",
                         markers=True
                     )
                     
                     fig_small.update_layout(
-                        height=260, # Ditinggikan untuk tempat legend
-                        margin=dict(l=10, r=10, t=40, b=30),
-                        showlegend=True, 
-                        legend=dict(
-                            title=None,
-                            orientation="h", # Legend memanjang di bawah
-                            y=-0.2,
-                            xanchor="center",
-                            x=0.5
-                        )
+                        height=200, 
+                        margin=dict(l=10, r=10, t=40, b=10),
+                        showlegend=False
                     )
                     fig_small.update_xaxes(dtick=1, title=None, tickfont=dict(size=9))
                     fig_small.update_yaxes(title=None, tickfont=dict(size=9))
@@ -919,7 +915,8 @@ elif halaman == "Metodologi & Validitas Model":
         else:
             story.append(Paragraph("Data koordinat komponen utama PCA tidak ditemukan di dataset hasil.", style_body))
         story.append(Spacer(1, 10))
-# Analisis Matriks Karakteristik Centroid
+ 
+        # Analisis Matriks Karakteristik Centroid
         story.append(Paragraph("Analisis Matriks Karakteristik Centroid (Dasar Penamaan)", style_subjudul))
         story.append(Paragraph(
             "Karakteristik kuantitatif dari rata-rata nilai indikator tertransformasi yang menjadi penentu "
@@ -927,45 +924,20 @@ elif halaman == "Metodologi & Validitas Model":
             style_body
         ))
         story.append(Spacer(1, 6))
-
-        # Baca file centroid bawaan yang sudah di-scaling
-        df_centroids_pdf = pd.read_csv("centroids_cluster.csv")
-        
-        # Petakan urutan cluster ke label semantiknya
-        label_mapping = {
-            0: 'Digital Menengah',
-            1: 'Digital Maju',
-            2: 'Digital Spesialis Non-Tunai',
-            3: 'Digital Rendah'
-        }
-        df_centroids_pdf.index = df_centroids_pdf.index.map(label_mapping)
-        
-        # Ubah nama kolom
+ 
+        indikator_analisis_pdf = ['outflow_tunai', 'kartu_atm_debet', 'Server_Based', 'SKNBI_Asal']
         label_indikator_pdf = {
-            'outflow_tunai': 'Outflow Tunai', 
-            'kartu_atm_debet': 'Kartu ATM/Debet',
-            'Server_Based': 'Server Based', 
-            'SKNBI_Asal': 'SKNBI Asal'
+            'outflow_tunai': 'Outflow Tunai', 'kartu_atm_debet': 'Kartu ATM/Debet',
+            'Server_Based': 'Server Based', 'SKNBI_Asal': 'SKNBI Asal'
         }
-        df_centroids_pdf = df_centroids_pdf.rename(columns=label_indikator_pdf)
-
-        # Plot menggunakan Seaborn dengan tema viridis
+        df_centroid_pdf = df.groupby('Target_Semantic')[indikator_analisis_pdf].mean().rename(columns=label_indikator_pdf)
+ 
         fig_heat, ax_heat = plt.subplots(figsize=(6, 3.2))
-        sns.heatmap(
-            df_centroids_pdf, 
-            annot=True, 
-            fmt=".2f", 
-            cmap="viridis", 
-            ax=ax_heat,
-            cbar_kws={'label': 'Nilai Skala'}, 
-            annot_kws={"size": 7}
-        )
-        
-        ax_heat.set_xlabel("Fitur Skala", fontsize=8)
-        ax_heat.set_ylabel("Klaster Semantik", fontsize=8)
-        ax_heat.tick_params(axis='x', labelsize=7)
-        ax_heat.tick_params(axis='y', labelsize=7, labelrotation=0) # Memastikan teks Y tidak miring
-        
+        sns.heatmap(df_centroid_pdf, annot=True, fmt=".3f", cmap="RdBu_r", ax=ax_heat,
+                    cbar_kws={'label': 'Nilai Skala Log Mean'}, annot_kws={"size": 7})
+        ax_heat.set_xlabel("Indikator Keuangan/Transaksi", fontsize=8)
+        ax_heat.set_ylabel("Label Klaster Semantik", fontsize=8)
+        ax_heat.tick_params(labelsize=7)
         fig_heat.tight_layout()
         buf_heat = io.BytesIO()
         fig_heat.savefig(buf_heat, format='png', dpi=150)
@@ -973,11 +945,11 @@ elif halaman == "Metodologi & Validitas Model":
         buf_heat.seek(0)
         story.append(Image(buf_heat, width=14 * cm, height=7.5 * cm))
         story.append(Spacer(1, 10))
-
+ 
         doc.build(story)
         buffer.seek(0)
         return buffer.getvalue()
-    
+ 
     dl_col1, dl_col2 = st.columns(2)
 
     with dl_col1:

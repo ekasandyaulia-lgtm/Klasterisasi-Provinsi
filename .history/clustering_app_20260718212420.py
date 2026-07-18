@@ -21,9 +21,9 @@ st.set_page_config(page_title="Dashboard Analisis Klaster Provinsi", layout="wid
 # Cache Data
 @st.cache_data
 def load_data():
-    return pd.read_csv("final clustering.csv"), pd.read_csv("metrics_results.csv"),  pd.read_csv("centroids_cluster.csv")
+    return pd.read_csv("final clustering.csv"), pd.read_csv("metrics_results.csv")
 
-df, df_metrics, df_centroids = load_data()
+df, df_metrics = load_data()
 
 palet_warna = {
             "Digital Maju": "#00B871",
@@ -427,19 +427,23 @@ elif halaman == "Dinamika Temporal":
 
 elif halaman == "Profil & Perbandingan Provinsi":
     st.title("Profil & Perbandingan Provinsi")
+    st.markdown(
+        "Halaman ini memungkinkan analisis mendalam untuk membandingkan profil adopsi digital "
+        "serta tren historis antar provinsi."
+    )
     st.divider()
 
     provinsi_list = sorted(df['Provinsi'].unique().tolist())
     default_prov = provinsi_list[:3] if len(provinsi_list) >= 3 else provinsi_list
 
     selected_provinsi = st.multiselect(
-        "Pilih Provinsi untuk Dibandingkan (Maksimal 3 provinsi):",
+        "Pilih Provinsi untuk Dibandingkan (Disarankan maksimal 5 provinsi):",
         options=provinsi_list,
         default=default_prov
     )
 
-    if len(selected_provinsi) > 3:
-        st.warning("⚠️ Memilih lebih dari 3 provinsi dapat membuat grafik visualisasi menjadi padat dan sulit dibaca.")
+    if len(selected_provinsi) > 5:
+        st.warning("⚠️ Memilih lebih dari 5 provinsi dapat membuat grafik visualisasi menjadi padat dan sulit dibaca.")
 
     if not selected_provinsi:
         st.info("💡 Silakan pilih minimal satu provinsi pada selektor di atas untuk menampilkan analisis.")
@@ -465,61 +469,51 @@ elif halaman == "Profil & Perbandingan Provinsi":
 
         col_radar, col_line = st.columns(2)
         
-        with col_radar: 
-                    st.subheader("Perbandingan Nilai Aktual Indikator Seluruh Tahun")
-                    
-                    st.markdown(
-                        "<small><i>Menampilkan perbandingan nilai transaksi aktual antar provinsi terpilih.</i></small>",
-                        unsafe_allow_html=True
-                    )
+        # Heatmap Chart
+        with col_radar:
+            st.subheader("Profil Kekuatan Indikator (Heatmap)")
+            
+            tahun_radar = st.selectbox(
+                "Pilih Tahun Analisis Kinerja:", 
+                options=sorted(df['Tahun'].unique(), reverse=True),
+                key="tahun_radar_profil"
+            )
+            
+            st.markdown(
+                f"<small><i>Warna yang lebih gelap menunjukkan nilai indikator yang lebih tinggi/kuat pada skala 0-100 untuk tahun {tahun_radar}.</i></small>",
+                unsafe_allow_html=True
+            )
 
-                    df_bar_filtered = df[df['Provinsi'].isin(selected_provinsi)].copy()
+            df_radar_filtered = df_norm[
+                (df_norm['Provinsi'].isin(selected_provinsi)) & 
+                (df_norm['Tahun'] == tahun_radar)
+            ]
 
-                    if not df_bar_filtered.empty:
-                        # Jadikan string agar warna beda tiap tahun
-                        df_bar_filtered['Tahun'] = df_bar_filtered['Tahun'].astype(str)
+            if not df_radar_filtered.empty:
+                df_heatmap = df_radar_filtered.set_index('Provinsi')[indikator_cols]
+                df_heatmap.columns = [ind_labels[col] for col in df_heatmap.columns]
 
-                        df_melt = df_bar_filtered.melt(
-                            id_vars=['Provinsi', 'Tahun'], 
-                            value_vars=indikator_cols,
-                            var_name='Indikator', 
-                            value_name='Nilai'
-                        )
-                        
-                        df_melt['Indikator'] = df_melt['Indikator'].map(ind_labels)
+                fig_heat = px.imshow(
+                    df_heatmap,
+                    text_auto=".1f",
+                    aspect="auto",
+                    color_continuous_scale="Blues",
+                    labels=dict(x="Indikator", y="Provinsi", color="Skor")
+                )
+                
+                fig_heat.update_layout(
+                    height=420, 
+                    margin=dict(l=20, r=20, t=30, b=30),
+                    coloraxis_showscale=False 
+                )
+                fig_heat.update_xaxes(side="bottom", tickfont=dict(size=10))
+                fig_heat.update_yaxes(tickfont=dict(size=11))
+                
+                st.plotly_chart(fig_heat, use_container_width=True)
+            else:
+                st.warning("Data tidak tersedia untuk kombinasi filter ini.")
 
-                        # Buat bar chart (stacked otomatis oleh parameter color='Tahun')
-                        fig_bar = px.bar(
-                            df_melt, 
-                            x='Provinsi', 
-                            y='Nilai', 
-                            color='Tahun',
-                            facet_col='Indikator',
-                            facet_col_wrap=2, 
-                            text_auto='.2s' 
-                        )
-
-                        # Lepas kuncian sumbu Y
-                        fig_bar.update_yaxes(matches=None, showticklabels=True, title=None)
-                        
-                        # Setup layout
-                        fig_bar.update_layout(
-                            height=500, 
-                            margin=dict(l=20, r=20, t=40, b=20),
-                            showlegend=True,
-                            legend_title_text='Tahun',
-                            barmode='stack'
-                        )
-                        
-                        # Bersihkan teks bawaan Plotly
-                        fig_bar.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1], font=dict(weight="bold")))
-                        fig_bar.for_each_xaxis(lambda x: x.update(title=''))
-                        
-                        st.plotly_chart(fig_bar, use_container_width=True)
-                    else:
-                        st.warning("Data tidak tersedia untuk kombinasi filter ini.")
-
- # Line Chart
+        # Line Chart
         with col_line:
             st.subheader("Tren Historis Indikator (2021–2025)")
             st.markdown("<small><i>Menampilkan visualisasi terpisah untuk memantau pergerakan nilai aktual.</i></small>", unsafe_allow_html=True)
@@ -534,30 +528,22 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         x='Tahun', 
                         y=col_name, 
                         color='Provinsi',
-                        color_discrete_sequence=px.colors.qualitative.Set2, # Palet warna baru
                         title=f"<b>{ind_labels[col_name]}</b>",
                         markers=True
                     )
                     
                     fig_small.update_layout(
-                        height=260, # Ditinggikan untuk tempat legend
-                        margin=dict(l=10, r=10, t=40, b=30),
-                        showlegend=True, 
-                        legend=dict(
-                            title=None,
-                            orientation="h", # Legend memanjang di bawah
-                            y=-0.2,
-                            xanchor="center",
-                            x=0.5
-                        )
+                        height=200, 
+                        margin=dict(l=10, r=10, t=40, b=10),
+                        showlegend=False
                     )
                     fig_small.update_xaxes(dtick=1, title=None, tickfont=dict(size=9))
                     fig_small.update_yaxes(title=None, tickfont=dict(size=9))
                     st.plotly_chart(fig_small, use_container_width=True)
 
         st.divider()
-        with st.expander("📊 Data Perbandingan Data Provinsi", expanded=False):
-            st.markdown("Berikut adalah data aktual hasil filter wilayah :")
+        with st.expander("📊 Tabel Data Mentah Aktual & Ekspor Lampiran", expanded=False):
+            st.markdown("Berikut adalah data aktual hasil filter wilayah untuk kebutuhan lampiran dokumen anggaran:")
             
             kolom_tabel = ['Provinsi', 'Tahun', 'Target_Semantic'] + indikator_cols
             df_table = df[df['Provinsi'].isin(selected_provinsi)][kolom_tabel].sort_values(['Provinsi', 'Tahun'])
@@ -919,7 +905,8 @@ elif halaman == "Metodologi & Validitas Model":
         else:
             story.append(Paragraph("Data koordinat komponen utama PCA tidak ditemukan di dataset hasil.", style_body))
         story.append(Spacer(1, 10))
-# Analisis Matriks Karakteristik Centroid
+ 
+        # Analisis Matriks Karakteristik Centroid
         story.append(Paragraph("Analisis Matriks Karakteristik Centroid (Dasar Penamaan)", style_subjudul))
         story.append(Paragraph(
             "Karakteristik kuantitatif dari rata-rata nilai indikator tertransformasi yang menjadi penentu "
@@ -927,45 +914,20 @@ elif halaman == "Metodologi & Validitas Model":
             style_body
         ))
         story.append(Spacer(1, 6))
-
-        # Baca file centroid bawaan yang sudah di-scaling
-        df_centroids_pdf = pd.read_csv("centroids_cluster.csv")
-        
-        # Petakan urutan cluster ke label semantiknya
-        label_mapping = {
-            0: 'Digital Menengah',
-            1: 'Digital Maju',
-            2: 'Digital Spesialis Non-Tunai',
-            3: 'Digital Rendah'
-        }
-        df_centroids_pdf.index = df_centroids_pdf.index.map(label_mapping)
-        
-        # Ubah nama kolom
+ 
+        indikator_analisis_pdf = ['outflow_tunai', 'kartu_atm_debet', 'Server_Based', 'SKNBI_Asal']
         label_indikator_pdf = {
-            'outflow_tunai': 'Outflow Tunai', 
-            'kartu_atm_debet': 'Kartu ATM/Debet',
-            'Server_Based': 'Server Based', 
-            'SKNBI_Asal': 'SKNBI Asal'
+            'outflow_tunai': 'Outflow Tunai', 'kartu_atm_debet': 'Kartu ATM/Debet',
+            'Server_Based': 'Server Based', 'SKNBI_Asal': 'SKNBI Asal'
         }
-        df_centroids_pdf = df_centroids_pdf.rename(columns=label_indikator_pdf)
-
-        # Plot menggunakan Seaborn dengan tema viridis
+        df_centroid_pdf = df.groupby('Target_Semantic')[indikator_analisis_pdf].mean().rename(columns=label_indikator_pdf)
+ 
         fig_heat, ax_heat = plt.subplots(figsize=(6, 3.2))
-        sns.heatmap(
-            df_centroids_pdf, 
-            annot=True, 
-            fmt=".2f", 
-            cmap="viridis", 
-            ax=ax_heat,
-            cbar_kws={'label': 'Nilai Skala'}, 
-            annot_kws={"size": 7}
-        )
-        
-        ax_heat.set_xlabel("Fitur Skala", fontsize=8)
-        ax_heat.set_ylabel("Klaster Semantik", fontsize=8)
-        ax_heat.tick_params(axis='x', labelsize=7)
-        ax_heat.tick_params(axis='y', labelsize=7, labelrotation=0) # Memastikan teks Y tidak miring
-        
+        sns.heatmap(df_centroid_pdf, annot=True, fmt=".3f", cmap="RdBu_r", ax=ax_heat,
+                    cbar_kws={'label': 'Nilai Skala Log Mean'}, annot_kws={"size": 7})
+        ax_heat.set_xlabel("Indikator Keuangan/Transaksi", fontsize=8)
+        ax_heat.set_ylabel("Label Klaster Semantik", fontsize=8)
+        ax_heat.tick_params(labelsize=7)
         fig_heat.tight_layout()
         buf_heat = io.BytesIO()
         fig_heat.savefig(buf_heat, format='png', dpi=150)
@@ -973,11 +935,11 @@ elif halaman == "Metodologi & Validitas Model":
         buf_heat.seek(0)
         story.append(Image(buf_heat, width=14 * cm, height=7.5 * cm))
         story.append(Spacer(1, 10))
-
+ 
         doc.build(story)
         buffer.seek(0)
         return buffer.getvalue()
-    
+ 
     dl_col1, dl_col2 = st.columns(2)
 
     with dl_col1:
