@@ -721,7 +721,7 @@ elif halaman == "Metodologi & Validitas Model":
     else:
         st.warning("Data koordinat komponen utama PCA tidak ditemukan di dataset hasil.")
 
-# Heatmap Centroid
+    # Heatmap Centroid
     st.divider()
     st.subheader("Analisis Matriks Karakteristik Centroid")
     st.markdown(
@@ -729,42 +729,26 @@ elif halaman == "Metodologi & Validitas Model":
         "yang menjadi penentu klasifikasi dan rujukan pemberian label semantik regional:"
     )
     
-    # nama label index
-    label_mapping = {
-        0: 'Digital Menengah',
-        1: 'Digital Maju',
-        2: 'Digital Spesialis Non-Tunai',
-        3: 'Digital Rendah'
-    }
-    df_centroids.index = df_centroids.index.map(label_mapping)
-    
-    # nama kolom
+    indikator_analisis = ['outflow_tunai', 'kartu_atm_debet', 'Server_Based', 'SKNBI_Asal']
     ind_labels_map = {
         'outflow_tunai': 'Outflow Tunai',
         'kartu_atm_debet': 'Kartu ATM/Debet',
         'Server_Based': 'Server Based',
         'SKNBI_Asal': 'SKNBI Asal'
     }
-    df_centroids = df_centroids.rename(columns=ind_labels_map)
     
-    # visualisasi heatmap menggunakan Plotly Express
+    # Hitung rata-rata tiap indikator untuk basis pembentukan centroid
+    df_centroid_map = df.groupby('Target_Semantic')[indikator_analisis].mean().rename(columns=ind_labels_map)
+    
     fig_centroid_heatmap = px.imshow(
-        df_centroids,
-        labels=dict(x="Fitur Skala", y="Klaster Semantik", color="Nilai Skala"),
-        x=df_centroids.columns,
-        y=df_centroids.index,
-        color_continuous_scale="viridis",
-        aspect="auto", 
-        text_auto=".2f" 
+        df_centroid_map,
+        labels=dict(x="Indikator Keuangan/Transaksi", y="Label Klaster Semantik", color="Nilai Skala Log Mean"),
+        x=df_centroid_map.columns,
+        y=df_centroid_map.index,
+        color_continuous_scale="RdBu_r",
+        text_auto=".3f"
     )
-    
-    fig_centroid_heatmap.update_layout(
-        height=400, 
-        margin=dict(t=20, b=20)
-    )
-    # Memaksa teks sumbu X lurus 
-    fig_centroid_heatmap.update_xaxes(tickangle=0)
-    
+    fig_centroid_heatmap.update_layout(height=380, margin=dict(t=20, b=20))
     st.plotly_chart(fig_centroid_heatmap, use_container_width=True)
 
     st.divider()
@@ -935,8 +919,7 @@ elif halaman == "Metodologi & Validitas Model":
         else:
             story.append(Paragraph("Data koordinat komponen utama PCA tidak ditemukan di dataset hasil.", style_body))
         story.append(Spacer(1, 10))
- 
-    # Analisis Matriks Karakteristik Centroid
+# Analisis Matriks Karakteristik Centroid
         story.append(Paragraph("Analisis Matriks Karakteristik Centroid (Dasar Penamaan)", style_subjudul))
         story.append(Paragraph(
             "Karakteristik kuantitatif dari rata-rata nilai indikator tertransformasi yang menjadi penentu "
@@ -945,10 +928,10 @@ elif halaman == "Metodologi & Validitas Model":
         ))
         story.append(Spacer(1, 6))
 
-        # Baca file centroid
+        # Baca file centroid bawaan yang sudah di-scaling
         df_centroids_pdf = pd.read_csv("centroids_cluster.csv")
         
-        # Mapping index dan kolom
+        # Petakan urutan cluster ke label semantiknya
         label_mapping = {
             0: 'Digital Menengah',
             1: 'Digital Maju',
@@ -957,6 +940,7 @@ elif halaman == "Metodologi & Validitas Model":
         }
         df_centroids_pdf.index = df_centroids_pdf.index.map(label_mapping)
         
+        # Ubah nama kolom
         label_indikator_pdf = {
             'outflow_tunai': 'Outflow Tunai', 
             'kartu_atm_debet': 'Kartu ATM/Debet',
@@ -965,7 +949,7 @@ elif halaman == "Metodologi & Validitas Model":
         }
         df_centroids_pdf = df_centroids_pdf.rename(columns=label_indikator_pdf)
 
-        # Plot Heatmap
+        # Plot menggunakan Seaborn dengan tema viridis
         fig_heat, ax_heat = plt.subplots(figsize=(6, 3.2))
         sns.heatmap(
             df_centroids_pdf, 
@@ -980,9 +964,9 @@ elif halaman == "Metodologi & Validitas Model":
         ax_heat.set_xlabel("Fitur Skala", fontsize=8)
         ax_heat.set_ylabel("Klaster Semantik", fontsize=8)
         ax_heat.tick_params(axis='x', labelsize=7)
-        ax_heat.tick_params(axis='y', labelsize=7, labelrotation=0)
-        fig_heat.tight_layout()
+        ax_heat.tick_params(axis='y', labelsize=7, labelrotation=0) # Memastikan teks Y tidak miring
         
+        fig_heat.tight_layout()
         buf_heat = io.BytesIO()
         fig_heat.savefig(buf_heat, format='png', dpi=150)
         plt.close(fig_heat)
@@ -993,7 +977,7 @@ elif halaman == "Metodologi & Validitas Model":
         doc.build(story)
         buffer.seek(0)
         return buffer.getvalue()
- 
+    
     dl_col1, dl_col2 = st.columns(2)
 
     with dl_col1:
