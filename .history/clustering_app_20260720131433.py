@@ -557,11 +557,6 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         title=f"<b>{ind_labels[col_name]}</b>",
                         markers=True
                     )
-                    fig_small.update_traces(
-                        mode="lines+markers+text",
-                        texttemplate="%{y:.2s}",
-                        textposition="top center"
-                    )
                     
                     fig_small.update_layout(
                         height=260, # Ditinggikan untuk tempat legend

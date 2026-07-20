@@ -163,7 +163,7 @@ if halaman == "Overview":
             else:
                 st.info("Data tidak tersedia untuk tahun ini.")
     with c2:
-        st.markdown("### Line Chart Dinamika Tempora")
+        st.markdown("### Tren Provinsi per Klaster")
         fig = px.bar(
             df.groupby(['Tahun','Target_Semantic']).size().reset_index(name='Jumlah'),
             x='Tahun',
@@ -407,7 +407,7 @@ elif halaman == "Dinamika Temporal":
             st.info("Tidak ada perubahan klaster antar tahun.")
 
     with col_tren:
-        st.subheader("Line Chart Dinamika Temporal")
+        st.subheader("Tren Makro Adopsi Digital")
         st.markdown("Nilai rata-rata indikator transaksi nasional (2021-2025):")
         
         indikator_cols = ['outflow_tunai', 'kartu_atm_debet', 'Server_Based', 'SKNBI_Asal']
@@ -428,7 +428,6 @@ elif halaman == "Dinamika Temporal":
                 legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
             )
             fig_trend.update_xaxes(dtick=1)
-            fig_trend.update_traces(mode="lines+markers+text",texttemplate="%{y:.2s}",textposition="top center")
             st.plotly_chart(fig_trend, use_container_width=True)
             st.caption("Satuan: outflow_tunai & SKNBI_Asal dalam Rp Miliar · kartu_atm_debet & Server_Based dalam Juta Unit")
         else:
@@ -556,11 +555,6 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         color_discrete_sequence=px.colors.qualitative.Set2, # Palet warna baru
                         title=f"<b>{ind_labels[col_name]}</b>",
                         markers=True
-                    )
-                    fig_small.update_traces(
-                        mode="lines+markers+text",
-                        texttemplate="%{y:.2s}",
-                        textposition="top center"
                     )
                     
                     fig_small.update_layout(
