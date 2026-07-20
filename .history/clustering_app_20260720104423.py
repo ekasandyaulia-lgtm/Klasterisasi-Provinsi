@@ -564,7 +564,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         )
                     )
                     fig_small.update_xaxes(dtick=1, title=None, tickfont=dict(size=9))
-                    fig_small.update_yaxes(title=satuan_labels.get(col_name, ''), tickfont=dict(size=8), title_font=dict(size=8))
+                    fig_small.update_yaxes(title=None, tickfont=dict(size=9))
                     st.plotly_chart(fig_small, use_container_width=True)
 
         st.divider()

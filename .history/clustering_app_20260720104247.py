@@ -456,12 +456,6 @@ elif halaman == "Profil & Perbandingan Provinsi":
             'Server_Based': 'Server Based',
             'SKNBI_Asal': 'SKNBI Asal'
         }
-        satuan_labels = {
-            'outflow_tunai': 'Nilai (Rp Miliar)',
-            'kartu_atm_debet': 'Jumlah (Juta Unit)',
-            'Server_Based': 'Jumlah (Juta Unit)',
-            'SKNBI_Asal': 'Nilai (Rp Miliar)',  
-        }       
 
         df_norm = df.copy()
         for col in indikator_cols:
@@ -564,7 +558,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         )
                     )
                     fig_small.update_xaxes(dtick=1, title=None, tickfont=dict(size=9))
-                    fig_small.update_yaxes(title=satuan_labels.get(col_name, ''), tickfont=dict(size=8), title_font=dict(size=8))
+                    fig_small.update_yaxes(title=None, tickfont=dict(size=9))
                     st.plotly_chart(fig_small, use_container_width=True)
 
         st.divider()

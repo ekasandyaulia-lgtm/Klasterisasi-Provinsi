@@ -411,11 +411,8 @@ elif halaman == "Dinamika Temporal":
             df_trend = df.groupby('Tahun')[avail_cols].mean().reset_index()
             df_trend_melted = df_trend.melt(id_vars='Tahun', value_vars=avail_cols, 
                                             var_name='Indikator', value_name='Nilai Rata-rata')
-            fig_trend = px.line(df_trend_melted, x='Tahun', y='Nilai Rata-rata', color='Indikator', markers=True,
-                    labels={
-                        'Nilai Rata-rata': 'Nilai Rata-rata (Rp Miliar / Juta Unit)',
-                        'Tahun': 'Tahun'
-                    })
+            fig_trend = px.line(df_trend_melted, x='Tahun', y='Nilai Rata-rata', color='Indikator', 
+                                markers=True)
             fig_trend.update_layout(
                 height=350,
                 margin=dict(l=0, r=0, t=10, b=0),
@@ -423,7 +420,6 @@ elif halaman == "Dinamika Temporal":
             )
             fig_trend.update_xaxes(dtick=1)
             st.plotly_chart(fig_trend, use_container_width=True)
-            st.caption("Satuan: outflow_tunai & SKNBI_Asal dalam Rp Miliar · kartu_atm_debet & Server_Based dalam Juta Unit")
         else:
             st.warning("Data indikator tidak ditemukan.")
 
@@ -456,12 +452,6 @@ elif halaman == "Profil & Perbandingan Provinsi":
             'Server_Based': 'Server Based',
             'SKNBI_Asal': 'SKNBI Asal'
         }
-        satuan_labels = {
-            'outflow_tunai': 'Nilai (Rp Miliar)',
-            'kartu_atm_debet': 'Jumlah (Juta Unit)',
-            'Server_Based': 'Jumlah (Juta Unit)',
-            'SKNBI_Asal': 'Nilai (Rp Miliar)',  
-        }       
 
         df_norm = df.copy()
         for col in indikator_cols:
@@ -527,7 +517,6 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         fig_bar.for_each_xaxis(lambda x: x.update(title=''))
                         
                         st.plotly_chart(fig_bar, use_container_width=True)
-                        st.caption("Satuan: Outflow Tunai & SKNBI Asal → Rp Miliar · Kartu ATM/Debet & Server Based → Juta Unit")
                     else:
                         st.warning("Data tidak tersedia untuk kombinasi filter ini.")
 
@@ -564,7 +553,7 @@ elif halaman == "Profil & Perbandingan Provinsi":
                         )
                     )
                     fig_small.update_xaxes(dtick=1, title=None, tickfont=dict(size=9))
-                    fig_small.update_yaxes(title=satuan_labels.get(col_name, ''), tickfont=dict(size=8), title_font=dict(size=8))
+                    fig_small.update_yaxes(title=None, tickfont=dict(size=9))
                     st.plotly_chart(fig_small, use_container_width=True)
 
         st.divider()
@@ -762,7 +751,7 @@ elif halaman == "Metodologi & Validitas Model":
     # visualisasi heatmap menggunakan Plotly Express
     fig_centroid_heatmap = px.imshow(
         df_centroids,
-        labels=dict(x="Indikator Transaksi", y="Klaster Semantik", color="Nilai Terstandarisasi (RobustScaler)"),
+        labels=dict(x="Fitur Skala", y="Klaster Semantik", color="Nilai Skala"),
         x=df_centroids.columns,
         y=df_centroids.index,
         color_continuous_scale="viridis",
@@ -778,7 +767,6 @@ elif halaman == "Metodologi & Validitas Model":
     fig_centroid_heatmap.update_xaxes(tickangle=0)
     
     st.plotly_chart(fig_centroid_heatmap, use_container_width=True)
-    st.caption("Nilai pada heatmap adalah nilai rata-rata centroid setelah transformasi log1p dan standarisasi RobustScaler — bukan nilai aktual transaksi.")
 
     st.divider()
     st.subheader("Pusat Repositori Data & Dokumen Terbuka")
