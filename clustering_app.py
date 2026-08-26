@@ -163,7 +163,7 @@ if halaman == "Overview":
             else:
                 st.info("Data tidak tersedia untuk tahun ini.")
     with c2:
-        st.markdown("### Line Chart Dinamika Tempora")
+        st.markdown("### Stacked Bar Chart Klaster")
         fig = px.bar(
             df.groupby(['Tahun','Target_Semantic']).size().reset_index(name='Jumlah'),
             x='Tahun',
