@@ -431,7 +431,7 @@ with col_tabel:
         else:
             st.info("Tidak ada perubahan klaster antar tahun.")
 
-    with col_tren:
+with col_tren:
         st.subheader("Line Chart Dinamika Temporal")
         st.markdown("Nilai rata-rata indikator transaksi nasional (2021-2025):")
         
