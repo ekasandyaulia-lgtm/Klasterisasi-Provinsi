@@ -177,7 +177,6 @@ if halaman == "Overview":
             y='Jumlah',
             color='Klaster',
             barmode='stack',
-            category_orders={'Klaster': urutan_klaster},  # poin 3
             color_discrete_map=palet_warna,
             text='Jumlah'
         )
@@ -185,9 +184,9 @@ if halaman == "Overview":
         fig.update_layout(
             yaxis_title="Jumlah Provinsi",
             xaxis_title="Tahun",
-            legend_title_text="Klaster",  # poin 1
+            legend_title_text="Klaster", 
             uniformtext_minsize=9,
-            uniformtext_mode='show'  # poin 2: paksa tampil angka walau segmen kecil, ganti "-" jadi angka aslinya
+            uniformtext_mode='show'  
         )
         st.plotly_chart(fig, width='stretch')
         
