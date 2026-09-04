@@ -88,95 +88,41 @@ if halaman == "Overview":
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
     st.divider()
 
+    # Urutan klaster konsisten untuk semua chart (poin 3)
+    urutan_klaster = ['Digital Rendah', 'Digital Menengah', 'Digital Maju', 'Digital Spesialis Non-Tunai']
+
     # Perhitungan KPI
     df_tahun_ini = df[df['Tahun'] == tahun]
     df_tahun_lalu = df[df['Tahun'] == tahun - 1]
     total_provinsi = df_tahun_ini.shape[0]
- 
+
     klaster_dominan, kpi1_teks = "-", "0 Prov"
     persentase_naik, persentase_turun = 0, 0
     provinsi_tertinggi, pertumbuhan_tertinggi = "-", 0
+    nilai_awal, nilai_akhir = 0, 0  # untuk konteks KPI4 (poin 4)
     cluster_counts_dict = {}
-
     if total_provinsi > 0:
         counts = df_tahun_ini['Target_Semantic'].value_counts()
         klaster_dominan, jumlah = counts.idxmax(), counts.max()
         kpi1_teks = f"{jumlah}/{total_provinsi} Prov"
         cluster_counts_dict = counts.to_dict()
- 
+
     if not df_tahun_lalu.empty and not df_tahun_ini.empty:
         df_merged = pd.merge(
-            df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']], 
-            df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']], 
+            df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']],
+            df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']],
             on='Provinsi', suffixes=('_now', '_prev')
         )
         if not df_merged.empty:
-            persentase_naik = (df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum() 
-            persentase_turun = (df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum() 
+            persentase_naik = (df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum()
+            persentase_turun = (df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum()
             df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
-            idx = df_merged['growth'].idxmax()
-            provinsi_tertinggi, pertumbuhan_tertinggi = df_merged.loc[idx, 'Provinsi'], df_merged.loc[idx, 'growth']
- 
+
             df_valid = df_merged[df_merged['Server_Based_prev'] > 1.0]
             if not df_valid.empty:
                 row = df_valid.nlargest(1, 'growth').iloc[0]
             else:
                 row = df_merged.nlargest(1, 'growth').iloc[0]
-            provinsi_tertinggi = row['Provinsi']
-            pertumbuhan_tertinggi = row['growth']
-
-    # Tampilan KPI
-    st.subheader(f"KPI Tahun {tahun}")
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric(f"Dominan: Klaster {klaster_dominan}", kpi1_teks)
-    k2.metric("Naik Klaster", f"{persentase_naik} Provinsi", "vs Tahun Lalu")
-    k3.metric("Turun Klaster", f"{persentase_turun} Provinsi", "- vs Tahun Lalu", delta_color="inverse")
-    k4.metric(label=f"Top Growth Server Based ({provinsi_tertinggi})", value=f"{pertumbuhan_tertinggi:.1f}%")
-    st.divider()
-
-    # Visual Utama
-    c1, c2 = st.columns(2)
-    with c1:
-            st.markdown("### Proporsi Klaster")
-            if not df_tahun_ini.empty:
-                df_pie = df_tahun_ini['Target_Semantic'].value_counts().reset_index()
-                df_pie.columns = ['Target_Semantic', 'Jumlah']
-
-                fig_pie = px.pie(
-                    df_pie,
-                    names='Target_Semantic',
-                    values='Jumlah',
-                    color='Target_Semantic',
-                    color_discrete_map=palet_warna,
-                    hole=0.0  # ganti ke 0.4 kalau mau donut chart
-                )
-                fig_pie.update_traces(textinfo='percent+label')
-                fig_pie.update_layout(
-                    height=400,
-                    margin=dict(l=0, r=0, t=10, b=0),
-                    legend=dict(
-                        bgcolor="rgba(255,255,255,0.85)",
-                        bordercolor="lightgray", borderwidth=1
-                    )
-                )
-                st.plotly_chart(fig_pie, width='stretch')
-            else:
-                st.info("Data tidak tersedia untuk tahun ini.")
-    with c2:
-        st.markdown("### Stacked Bar Chart Klaster")
-        fig = px.bar(
-            df.groupby(['Tahun','Target_Semantic']).size().reset_index(name='Jumlah'),
-            x='Tahun',
-            y='Jumlah',
-            color='Target_Semantic',
-            barmode='stack',
-            color_discrete_map=palet_warna,
-            text='Jumlah'
-        )
-        fig.update_traces(textposition='inside', textfont_size=11)
-        fig.update_layout(yaxis_title="Jumlah Provinsi", xaxis_title="Tahun")
-        st.plotly_chart(fig, width='stretch')
-
 # HALAMAN PETA
 elif halaman == "Peta Klaster Provinsi":
     st.title("Peta Klaster Provinsi")
