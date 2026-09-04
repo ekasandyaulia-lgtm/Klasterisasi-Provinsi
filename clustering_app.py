@@ -87,8 +87,8 @@ if halaman == "Overview":
         tahun = st.selectbox("Pilih Tahun", options=[2021, 2022, 2023, 2024, 2025], index=4)
     st.divider()
 
-    # Urutan klaster konsisten untuk semua chart (poin 3)
-    urutan_klaster = ['Digital Rendah', 'Digital Menengah', 'Digital Maju', 'Digital Spesialis Non-Tunai']
+    # Urutan klaster 
+    urutan_klaster = ['Digital Spesialis Non-Tunai', 'Digital Maju', 'Digital Menengah', 'Digital Rendah']
 
     # Perhitungan KPI
     df_tahun_ini = df[df['Tahun'] == tahun]
