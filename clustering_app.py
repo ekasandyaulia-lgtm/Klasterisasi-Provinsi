@@ -78,7 +78,6 @@ with col_menu:
     )
  
 st.markdown("<hr style='margin:0 0 20px 0;border:none;border-top:1px solid #E5E7EB;'>", unsafe_allow_html=True)
-
 # Overview Page
 if halaman == "Overview":
     col_header, col_filter = st.columns([8, 3], vertical_alignment="bottom")
@@ -123,6 +122,75 @@ if halaman == "Overview":
                 row = df_valid.nlargest(1, 'growth').iloc[0]
             else:
                 row = df_merged.nlargest(1, 'growth').iloc[0]
+            provinsi_tertinggi = row['Provinsi']
+            pertumbuhan_tertinggi = row['growth']
+            nilai_awal = row['Server_Based_prev']
+            nilai_akhir = row['Server_Based_now']
+
+    # Tampilan KPI
+    st.subheader(f"KPI Tahun {tahun}")
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric(f"Dominan: Klaster {klaster_dominan}", kpi1_teks)
+    k2.metric("Naik Klaster", f"{persentase_naik} Provinsi", "vs Tahun Lalu")
+    k3.metric("Turun Klaster", f"{persentase_turun} Provinsi", "- vs Tahun Lalu", delta_color="inverse")
+    # poin 4: tambah konteks Rp dan tahun pembanding di caption bawah metric
+    k4.metric(label=f"Top Growth Server Based ({provinsi_tertinggi})", value=f"{pertumbuhan_tertinggi:.1f}%")
+    k4.caption(f"Rp {nilai_awal:,.0f} Miliar ({tahun-1}) → Rp {nilai_akhir:,.0f} Miliar ({tahun})")
+    st.divider()
+
+    # Visual Utama
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("### Proporsi Klaster")
+        if not df_tahun_ini.empty:
+            df_pie = df_tahun_ini['Target_Semantic'].value_counts().reindex(urutan_klaster).dropna().reset_index()
+            df_pie.columns = ['Klaster', 'Jumlah']  # poin 1: label umum
+            fig_pie = px.pie(
+                df_pie,
+                names='Klaster',
+                values='Jumlah',
+                color='Klaster',
+                category_orders={'Klaster': urutan_klaster},  # poin 3
+                color_discrete_map=palet_warna,
+                hole=0.0
+            )
+            fig_pie.update_traces(textinfo='percent+label')
+            fig_pie.update_layout(
+                height=400,
+                margin=dict(l=0, r=0, t=10, b=0),
+                legend=dict(
+                    title="Klaster",  # poin 1
+                    bgcolor="rgba(255,255,255,0.85)",
+                    bordercolor="lightgray", borderwidth=1
+                )
+            )
+            st.plotly_chart(fig_pie, width='stretch')
+        else:
+            st.info("Data tidak tersedia untuk tahun ini.")
+    with c2:
+        st.markdown("### Stacked Bar Chart Klaster")
+        df_bar = df.groupby(['Tahun', 'Target_Semantic']).size().reset_index(name='Jumlah')
+        df_bar = df_bar.rename(columns={'Target_Semantic': 'Klaster'})  # poin 1
+        fig = px.bar(
+            df_bar,
+            x='Tahun',
+            y='Jumlah',
+            color='Klaster',
+            barmode='stack',
+            category_orders={'Klaster': urutan_klaster},  # poin 3
+            color_discrete_map=palet_warna,
+            text='Jumlah'
+        )
+        fig.update_traces(textposition='inside', textfont_size=11, cliponaxis=False)
+        fig.update_layout(
+            yaxis_title="Jumlah Provinsi",
+            xaxis_title="Tahun",
+            legend_title_text="Klaster",  # poin 1
+            uniformtext_minsize=9,
+            uniformtext_mode='show'  # poin 2: paksa tampil angka walau segmen kecil, ganti "-" jadi angka aslinya
+        )
+        st.plotly_chart(fig, width='stretch')
+        
 # HALAMAN PETA
 elif halaman == "Peta Klaster Provinsi":
     st.title("Peta Klaster Provinsi")
