@@ -352,7 +352,6 @@ elif halaman == "Dinamika Temporal":
 
         label_klaster_pendek = [label.split(" - ", 1)[1] for label in unique_labels]
 
-
         node_colors = [palet_warna.get(klaster, warna_default) for klaster in label_klaster_pendek]
 
         def hex_ke_rgba(hex_color, alpha=0.45):
@@ -399,29 +398,29 @@ elif halaman == "Dinamika Temporal":
 
     except Exception as e:
         st.error(f"Gagal membuat Sankey diagram: {e}")
-        
+
     st.divider()
 
     col_tabel, col_tren = st.columns(2)
-    
-with col_tabel:
+
+    with col_tabel:
         st.subheader("Daftar Perubahan Klaster")
         st.markdown("Provinsi yang mengalami perpindahan klaster dari tahun ke tahun:")
-        
+
         years = sorted(df['Tahun'].unique())
         riwayat_per_provinsi = {}
-        
+
         for i in range(len(years) - 1):
             y1, y2 = years[i], years[i + 1]
             df_y1 = df[df['Tahun'] == y1].set_index('Provinsi')['Target_Semantic']
             df_y2 = df[df['Tahun'] == y2].set_index('Provinsi')['Target_Semantic']
-            
+
             for prov in df_y1.index:
                 if prov in df_y2.index and df_y1[prov] != df_y2[prov]:
                     if prov not in riwayat_per_provinsi:
                         riwayat_per_provinsi[prov] = [f"{y1}: {df_y1[prov]}"]
                     riwayat_per_provinsi[prov].append(f"{y2}: {df_y2[prov]}")
-        
+
         if riwayat_per_provinsi:
             df_changes = pd.DataFrame([
                 {'No': i + 1, 'Provinsi': prov, 'Perubahan Klaster': ' → '.join(riwayat)}
@@ -431,13 +430,13 @@ with col_tabel:
         else:
             st.info("Tidak ada perubahan klaster antar tahun.")
 
-with col_tren:
+    with col_tren:
         st.subheader("Line Chart Dinamika Temporal")
         st.markdown("Nilai rata-rata indikator transaksi nasional (2021-2025):")
-        
+
         indikator_cols = ['outflow_tunai', 'kartu_atm_debet', 'Server_Based', 'SKNBI_Asal']
         avail_cols = [col for col in indikator_cols if col in df.columns]
-        
+
         if avail_cols:
             df_trend = df.groupby('Tahun')[avail_cols].mean().reset_index()
 
@@ -481,8 +480,7 @@ with col_tren:
         else:
             st.warning("Data indikator tidak ditemukan.")
 
-st.divider()
-
+    st.divider()
 
 elif halaman == "Profil & Perbandingan Provinsi":
     st.title("Profil & Perbandingan Provinsi")
