@@ -106,17 +106,27 @@ if halaman == "Overview":
         kpi1_teks = f"{jumlah}/{total_provinsi} Prov"
         cluster_counts_dict = counts.to_dict()
 
-    if not df_tahun_lalu.empty and not df_tahun_ini.empty:
-        df_merged = pd.merge(
-            df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']],
-            df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']],
-            on='Provinsi', suffixes=('_now', '_prev')
-        )
-        if not df_merged.empty:
-            persentase_naik = (df_merged['Target_Semantic_now'] > df_merged['Target_Semantic_prev']).sum()
-            persentase_turun = (df_merged['Target_Semantic_now'] < df_merged['Target_Semantic_prev']).sum()
-            df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
+    # Mapping rank klaster: rendah ke tinggi
+    rank_klaster = {
+        'Digital Rendah': 0,
+        'Digital Menengah': 1,
+        'Digital Maju': 2,
+        'Digital Spesialis Non-Tunai': 3
+    }
 
+        if not df_tahun_lalu.empty and not df_tahun_ini.empty:
+            df_merged = pd.merge(
+                df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']],
+                df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']],
+                on='Provinsi', suffixes=('_now', '_prev')
+            )
+        if not df_merged.empty:
+            df_merged['rank_now'] = df_merged['Target_Semantic_now'].map(rank_klaster)
+            df_merged['rank_prev'] = df_merged['Target_Semantic_prev'].map(rank_klaster)
+            persentase_naik = (df_merged['rank_now'] > df_merged['rank_prev']).sum()
+            persentase_turun = (df_merged['rank_now'] < df_merged['rank_prev']).sum()
+            df_merged['growth'] = ((df_merged['Server_Based_now'] - df_merged['Server_Based_prev']) / df_merged['Server_Based_prev']) * 100
+            
             df_valid = df_merged[df_merged['Server_Based_prev'] > 1.0]
             if not df_valid.empty:
                 row = df_valid.nlargest(1, 'growth').iloc[0]
