@@ -404,12 +404,12 @@ elif halaman == "Dinamika Temporal":
 
     col_tabel, col_tren = st.columns(2)
     
-    with col_tabel:
+with col_tabel:
         st.subheader("Daftar Perubahan Klaster")
         st.markdown("Provinsi yang mengalami perpindahan klaster dari tahun ke tahun:")
         
-        change_records = []
         years = sorted(df['Tahun'].unique())
+        riwayat_per_provinsi = {}
         
         for i in range(len(years) - 1):
             y1, y2 = years[i], years[i + 1]
@@ -418,16 +418,15 @@ elif halaman == "Dinamika Temporal":
             
             for prov in df_y1.index:
                 if prov in df_y2.index and df_y1[prov] != df_y2[prov]:
-                    change_records.append({
-                        'Provinsi': prov,
-                        'Tahun Awal': y1,
-                        'Klaster Awal': df_y1[prov],
-                        'Tahun Akhir': y2,
-                        'Klaster Akhir': df_y2[prov]
-                    })
+                    if prov not in riwayat_per_provinsi:
+                        riwayat_per_provinsi[prov] = [f"{y1}: {df_y1[prov]}"]
+                    riwayat_per_provinsi[prov].append(f"{y2}: {df_y2[prov]}")
         
-        if change_records:
-            df_changes = pd.DataFrame(change_records)
+        if riwayat_per_provinsi:
+            df_changes = pd.DataFrame([
+                {'No': i + 1, 'Provinsi': prov, 'Perubahan Klaster': ' → '.join(riwayat)}
+                for i, (prov, riwayat) in enumerate(riwayat_per_provinsi.items())
+            ])
             st.dataframe(df_changes, use_container_width=True, hide_index=True)
         else:
             st.info("Tidak ada perubahan klaster antar tahun.")
