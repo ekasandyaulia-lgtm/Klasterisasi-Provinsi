@@ -481,7 +481,7 @@ with col_tren:
         else:
             st.warning("Data indikator tidak ditemukan.")
 
-    st.divider()
+st.divider()
 
 
 elif halaman == "Profil & Perbandingan Provinsi":
