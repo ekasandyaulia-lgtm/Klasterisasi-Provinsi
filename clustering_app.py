@@ -180,7 +180,7 @@ if halaman == "Overview":
     with c2:
         st.markdown("### Stacked Bar Chart Klaster")
         df_bar = df.groupby(['Tahun', 'Target_Semantic']).size().reset_index(name='Jumlah')
-        df_bar = df_bar.rename(columns={'Target_Semantic': 'Klaster'})  # poin 1
+        df_bar = df_bar.rename(columns={'Target_Semantic': 'Klaster'}) 
         fig = px.bar(
             df_bar,
             x='Tahun',
@@ -204,14 +204,11 @@ if halaman == "Overview":
 # HALAMAN PETA
 elif halaman == "Peta Klaster Provinsi":
     st.title("Peta Klaster Provinsi")
-
     col_kontrol, col_peta = st.columns([3, 9])
-
     with col_kontrol:
         st.subheader("Filter Peta")
         tahun_peta = st.slider("Tahun", 2021, 2025, 2025)
-
-        klaster_list = sorted(df['Target_Semantic'].unique().tolist())
+        klaster_list = [k for k in urutan_klaster if k in df['Target_Semantic'].unique()]
         selected_klaster = st.multiselect(
             "Tampilkan Klaster", klaster_list, default=klaster_list
         )
