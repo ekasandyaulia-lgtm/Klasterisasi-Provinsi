@@ -26,10 +26,10 @@ def load_data():
 df, df_metrics, df_centroids = load_data()
 
 palet_warna = {
+            "Digital Spesialis Non-Tunai": "#8B2FE0",
             "Digital Maju": "#00B871",
             "Digital Menengah": "#FFB000",
-            "Digital Rendah": "#E8352F",
-            "Digital Spesialis Non-Tunai": "#8B2FE0",
+            "Digital Rendah": "#E8352F"
 }
 warna_default = "#95A5A6"
 
