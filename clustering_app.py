@@ -188,7 +188,7 @@ if halaman == "Overview":
             y='Jumlah',
             color='Klaster',
             barmode='stack',
-            category_orders={'Klaster': urutan_klaster[::-1]},
+            category_orders={'Klaster': urutan_klaster},
             color_discrete_map=palet_warna,
             text='Jumlah'
         )
