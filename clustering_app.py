@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 from streamlit_option_menu import option_menu
+from plotly.subplots import make_subplots
 import json
 import io   
 import plotly.graph_objects as go
@@ -439,22 +440,44 @@ elif halaman == "Dinamika Temporal":
         
         if avail_cols:
             df_trend = df.groupby('Tahun')[avail_cols].mean().reset_index()
-            df_trend_melted = df_trend.melt(id_vars='Tahun', value_vars=avail_cols, 
-                                            var_name='Indikator', value_name='Nilai Rata-rata')
-            fig_trend = px.line(df_trend_melted, x='Tahun', y='Nilai Rata-rata', color='Indikator', markers=True,
-                    labels={
-                        'Nilai Rata-rata': 'Nilai Rata-rata (Rp Miliar / Juta Unit)',
-                        'Tahun': 'Tahun'
-                    })
+
+            fig_trend = make_subplots(specs=[[{"secondary_y": True}]])
+            warna_indikator = {
+                'outflow_tunai': '#3498DB',
+                'kartu_atm_debet': '#2ECC71',
+                'Server_Based': '#8E44AD',
+                'SKNBI_Asal': '#E74C3C'
+            }
+            label_indikator = {
+                'outflow_tunai': 'Outflow Tunai',
+                'kartu_atm_debet': 'Kartu ATM/Debet',
+                'Server_Based': 'Server Based',
+                'SKNBI_Asal': 'SKNBI Asal'
+            }
+
+            for kolom in avail_cols:
+                secondary = (kolom == 'SKNBI_Asal')
+                fig_trend.add_trace(
+                    go.Scatter(
+                        x=df_trend['Tahun'], y=df_trend[kolom],
+                        name=label_indikator.get(kolom, kolom),
+                        mode="lines+markers+text",
+                        texttemplate="%{y:.2s}", textposition="top center",
+                        line=dict(color=warna_indikator.get(kolom))
+                    ),
+                    secondary_y=secondary
+                )
+
             fig_trend.update_layout(
                 height=350,
                 margin=dict(l=0, r=0, t=10, b=0),
                 legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
             )
-            fig_trend.update_xaxes(dtick=1)
-            fig_trend.update_traces(mode="lines+markers+text",texttemplate="%{y:.2s}",textposition="top center")
+            fig_trend.update_xaxes(dtick=1, title_text="Tahun")
+            fig_trend.update_yaxes(title_text="Outflow Tunai / Kartu ATM/Debet / Server Based", secondary_y=False)
+            fig_trend.update_yaxes(title_text="SKNBI Asal (Rp Miliar)", secondary_y=True)
             st.plotly_chart(fig_trend, use_container_width=True)
-            st.caption("Satuan: outflow_tunai & SKNBI_Asal dalam Rp Miliar · kartu_atm_debet & Server_Based dalam Juta Unit")
+            st.caption("Satuan: outflow_tunai & SKNBI_Asal dalam Rp Miliar · kartu_atm_debet & Server_Based dalam Juta Unit. SKNBI Asal ditampilkan pada sumbu kanan karena skalanya jauh lebih besar.")
         else:
             st.warning("Data indikator tidak ditemukan.")
 
