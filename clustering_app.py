@@ -208,6 +208,7 @@ elif halaman == "Peta Klaster Provinsi":
     with col_kontrol:
         st.subheader("Filter Peta")
         tahun_peta = st.slider("Tahun", 2021, 2025, 2025)
+        urutan_klaster = ['Digital Spesialis Non-Tunai', 'Digital Maju', 'Digital Menengah', 'Digital Rendah']
         klaster_list = [k for k in urutan_klaster if k in df['Target_Semantic'].unique()]
         selected_klaster = st.multiselect(
             "Tampilkan Klaster", klaster_list, default=klaster_list
