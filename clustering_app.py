@@ -114,12 +114,12 @@ if halaman == "Overview":
         'Digital Spesialis Non-Tunai': 3
     }
 
-        if not df_tahun_lalu.empty and not df_tahun_ini.empty:
-            df_merged = pd.merge(
-                df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']],
-                df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']],
-                on='Provinsi', suffixes=('_now', '_prev')
-            )
+    if not df_tahun_lalu.empty and not df_tahun_ini.empty:
+        df_merged = pd.merge(
+            df_tahun_ini[['Provinsi', 'Target_Semantic', 'Server_Based']],
+            df_tahun_lalu[['Provinsi', 'Target_Semantic', 'Server_Based']],
+            on='Provinsi', suffixes=('_now', '_prev')
+        )
         if not df_merged.empty:
             df_merged['rank_now'] = df_merged['Target_Semantic_now'].map(rank_klaster)
             df_merged['rank_prev'] = df_merged['Target_Semantic_prev'].map(rank_klaster)
