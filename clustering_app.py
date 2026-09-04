@@ -260,12 +260,13 @@ elif halaman == "Peta Klaster Provinsi":
             for kolom in ['Server_Based', 'Mobile_Based', 'Web_Based', 'Cloud_Based']:
                 if kolom in df.columns:
                     hover_cols.append(kolom)
-
+                    
             if mode_tampilan == "Peta Statis":
                 fig = px.choropleth(
                     df_map, geojson=geojson, locations='Provinsi',
                     featureidkey="properties.name",
                     color='Target_Semantic',
+                    category_orders={'Target_Semantic': klaster_list},
                     color_discrete_map=palet_warna,
                     hover_name='Provinsi',
                     hover_data=hover_cols,
@@ -276,6 +277,7 @@ elif halaman == "Peta Klaster Provinsi":
                     df_map, geojson=geojson, locations='Provinsi',
                     featureidkey="properties.name",
                     color='Target_Semantic',
+                    category_orders={'Target_Semantic': klaster_list},
                     color_discrete_map={klaster: palet_warna.get(klaster, warna_default) for klaster in df_map['Target_Semantic'].unique()},
                     hover_name='Provinsi',
                     hover_data=hover_cols,
