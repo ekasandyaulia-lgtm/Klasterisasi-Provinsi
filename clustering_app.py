@@ -188,7 +188,7 @@ if halaman == "Overview":
             y='Jumlah',
             color='Klaster',
             barmode='stack',
-            category_orders={'Klaster': urutan_klaster},
+            category_orders={'Klaster': urutan_klaster[::-1]},
             color_discrete_map=palet_warna,
             text='Jumlah'
         )
@@ -197,6 +197,7 @@ if halaman == "Overview":
             yaxis_title="Jumlah Provinsi",
             xaxis_title="Tahun",
             legend_title_text="Klaster", 
+            legend_traceorder="reversed",
             uniformtext_minsize=9,
             uniformtext_mode='show'  
         )
